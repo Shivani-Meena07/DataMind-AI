@@ -36,6 +36,8 @@ import numpy as np
 
 # Import versioning system
 from versioning import DatasetVersioningSystem, ChartGenerator, create_chart_generator
+from versioning import RAGEngine, create_rag_engine
+from versioning import NL2SQLEngine, SQLPlayground
 
 # Custom JSON encoder for numpy types
 class CustomJSONProvider(DefaultJSONProvider):
@@ -48,8 +50,12 @@ class CustomJSONProvider(DefaultJSONProvider):
             return float(obj)
         if isinstance(obj, np.ndarray):
             return obj.tolist()
-        if pd is not None and hasattr(pd, 'isna') and pd.isna(obj):
-            return None
+        if PANDAS_AVAILABLE:
+            try:
+                if pd.isna(obj):
+                    return None
+            except (ValueError, TypeError):
+                pass
         return super().default(obj)
 
 app = Flask(__name__)
@@ -65,6 +71,9 @@ CORS(app)
 # Initialize versioning system
 STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage')
 versioning_system = DatasetVersioningSystem(storage_path=STORAGE_PATH)
+
+# Initialize RAG engine for embedding search
+rag_engine = create_rag_engine(storage_path=STORAGE_PATH)
 
 # Configuration
 UPLOAD_FOLDER = tempfile.gettempdir()
@@ -158,8 +167,11 @@ def sanitize_for_json(obj):
     if isinstance(obj, np.ndarray):
         return sanitize_for_json(obj.tolist())
     if PANDAS_AVAILABLE:
-        if pd.isna(obj):
-            return None
+        try:
+            if pd.isna(obj):
+                return None
+        except (ValueError, TypeError):
+            pass
     if isinstance(obj, bool):
         return obj
     if isinstance(obj, (int, float, str)):
@@ -167,7 +179,7 @@ def sanitize_for_json(obj):
     # Fallback: convert to string
     try:
         return str(obj)
-    except:
+    except Exception:
         return None
 
 # ============================================================================
@@ -840,8 +852,8 @@ class FileDataAnalyzer:
             samples = df[col_name].dropna().head(10).tolist()
             
             # Check for potential primary key
-            is_pk = (col_name.lower() in ['id', 'pk'] or 
-                     col_name.lower().endswith('_id') and 
+            is_pk = ((col_name.lower() in ['id', 'pk'] or 
+                      col_name.lower().endswith('_id')) and 
                      df[col_name].nunique() == len(df))
             
             # Check for potential foreign key
@@ -1254,9 +1266,11 @@ def create_demo_database() -> str:
         );
     ''')
     
-    # Insert sample data
+    # Insert sample data (seeded for deterministic output → same data = same fingerprint)
     import random
     import string
+    
+    random.seed(42)  # Fixed seed ensures identical demo data every time
     
     def random_id():
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
@@ -1436,7 +1450,7 @@ def upload_database():
         
         # Generate content-based fingerprint for the dataset
         try:
-            fingerprint = versioning_system.identify_dataset(filepath, file_type)
+            fingerprint = versioning_system.identify_dataset(filepath, file_type, file.filename)
             session['dataset_id'] = fingerprint.dataset_id
             
             # Check if this dataset was already analyzed
@@ -1446,9 +1460,9 @@ def upload_database():
                 'success': True, 
                 'message': f'{file_type.upper()} file uploaded successfully',
                 'file_type': file_type,
-                'dataset_id': fingerprint.dataset_id[:16] + '...',
+                'dataset_id': fingerprint.dataset_id,
                 'is_cached': is_cached,
-                'cache_message': 'Dataset recognized - cached analysis available!' if is_cached else 'New dataset - will analyze fresh'
+                'cache_message': 'Same dataset recognized! Cached analysis ready — no re-computation needed.' if is_cached else 'New dataset detected — will analyze fresh'
             })
         except Exception as fp_error:
             # If fingerprinting fails, continue without versioning
@@ -1477,7 +1491,7 @@ def use_demo():
         
         # Generate fingerprint for demo database
         try:
-            fingerprint = versioning_system.identify_dataset(demo_path, 'sqlite')
+            fingerprint = versioning_system.identify_dataset(demo_path, 'sqlite', 'demo_ecommerce.db')
             session['dataset_id'] = fingerprint.dataset_id
         except:
             pass
@@ -1521,7 +1535,7 @@ def analyze():
             cached_results = versioning_system.storage.get_analysis_results(dataset_id)
             
             if cached_results and len(cached_results) > 2:
-                print(f"CACHE HIT: Found valid cached results for {dataset_id[:16]}")
+                print(f"CACHE HIT: Found valid cached results for {dataset_id}")
                 # Update access stats
                 versioning_system.storage.record_access(dataset_id)
                 versioning_system.storage._index['stats']['cache_hits'] += 1
@@ -1529,7 +1543,6 @@ def analyze():
                 
                 # Sanitize for JSON
                 results = sanitize_for_json(cached_results)
-                session['analysis_results'] = results
                 
                 # Add dataset_id to top level for charts API
                 results['dataset_id'] = dataset_id
@@ -1537,13 +1550,19 @@ def analyze():
                 # Add cache info to response
                 results['_cache_info'] = {
                     'is_cached': True,
-                    'dataset_id': dataset_id[:16] + '...',
-                    'message': 'Reused cached analysis - no recomputation needed!'
+                    'dataset_id': dataset_id,
+                    'message': 'Reused cached analysis — same data detected, no re-computation needed!'
                 }
+                
+                # Auto-index for RAG search
+                try:
+                    rag_engine.index_dataset(dataset_id, results)
+                except Exception as rag_err:
+                    print(f"[RAG] Auto-index warning: {rag_err}")
                 
                 return jsonify(results)
             else:
-                print(f"CACHE MISS: Dataset {dataset_id[:16]} exists in index but no analysis data - running fresh")
+                print(f"CACHE MISS: Dataset {dataset_id} exists in index but no analysis data - running fresh")
         
         # CACHE MISS - Run fresh analysis
         # Create analyzer factory for versioning system
@@ -1564,7 +1583,6 @@ def analyze():
         
         # Sanitize results for JSON serialization
         results = sanitize_for_json(processing_result.analysis_results)
-        session['analysis_results'] = results
         
         # Add dataset_id to top level for charts API
         results['dataset_id'] = processing_result.dataset_id
@@ -1572,10 +1590,16 @@ def analyze():
         # Add versioning info to response
         results['_cache_info'] = {
             'is_cached': processing_result.is_cached,
-            'dataset_id': processing_result.dataset_id[:16] + '...',
+            'dataset_id': processing_result.dataset_id,
             'processing_time_ms': round(processing_result.processing_time_ms, 2),
             'message': processing_result.message
         }
+        
+        # Auto-index for RAG search
+        try:
+            rag_engine.index_dataset(processing_result.dataset_id, results)
+        except Exception as rag_err:
+            print(f"[RAG] Auto-index warning: {rag_err}")
         
         return jsonify(results)
         
@@ -1587,9 +1611,18 @@ def analyze():
         try:
             analyzer = get_analyzer(db_path, file_type)
             results = analyzer.analyze()
-            analyzer.close()
+            if hasattr(analyzer, 'close'):
+                analyzer.close()
             results = sanitize_for_json(results)
-            session['analysis_results'] = results
+            # Try to store results with a basic ID for search/export
+            import hashlib
+            fallback_id = hashlib.sha256(db_path.encode()).hexdigest()
+            session['dataset_id'] = fallback_id
+            results['dataset_id'] = fallback_id
+            try:
+                rag_engine.index_dataset(fallback_id, results)
+            except Exception:
+                pass
             return jsonify(results)
         except Exception as inner_e:
             return jsonify({'error': str(inner_e)}), 500
@@ -1598,7 +1631,16 @@ def analyze():
 @app.route('/api/export/markdown', methods=['GET'])
 def export_markdown():
     """Export documentation as Markdown."""
-    results = session.get('analysis_results')
+    dataset_id = session.get('dataset_id')
+    
+    # Try to get results from versioning storage (not session - session has 4KB limit)
+    results = None
+    if dataset_id:
+        results = versioning_system.get_analysis(dataset_id)
+        # Also try stored markdown
+        stored_md = versioning_system.get_markdown(dataset_id)
+        if stored_md:
+            return jsonify({'markdown': stored_md})
     
     if not results:
         return jsonify({'error': 'No analysis results. Please analyze a database first.'}), 400
@@ -1611,81 +1653,97 @@ def export_markdown():
 @app.route('/api/download/markdown', methods=['GET'])
 def download_markdown():
     """Download documentation as Markdown file."""
-    results = session.get('analysis_results')
+    dataset_id = session.get('dataset_id')
     
-    if not results:
+    results = None
+    markdown = None
+    if dataset_id:
+        results = versioning_system.get_analysis(dataset_id)
+        markdown = versioning_system.get_markdown(dataset_id)
+    
+    if not results and not markdown:
         return jsonify({'error': 'No analysis results'}), 400
     
-    markdown = generate_markdown(results)
+    if not markdown:
+        markdown = generate_markdown(results)
+    
+    # Safe filename
+    db_name = (results or {}).get('database_name', 'database')
+    safe_name = re.sub(r'[^\w\-.]', '_', db_name)
     
     # Save to temp file
-    filepath = os.path.join(UPLOAD_FOLDER, f"{results['database_name']}_documentation.md")
+    filepath = os.path.join(UPLOAD_FOLDER, f"{safe_name}_documentation.md")
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(markdown)
     
-    return send_file(filepath, as_attachment=True, download_name=f"{results['database_name']}_documentation.md")
+    return send_file(filepath, as_attachment=True, download_name=f"{safe_name}_documentation.md")
 
 
 def generate_markdown(results: Dict) -> str:
     """Generate Markdown documentation from analysis results."""
     md = []
     
+    db_name = results.get('database_name', 'Database')
+    analysis_date = results.get('analysis_date', datetime.now().isoformat())[:10]
+    
     # Header
-    md.append(f"# 📊 {results['database_name']} - Database User Manual")
-    md.append(f"\n*Generated by DataMind AI on {results['analysis_date'][:10]}*\n")
+    md.append(f"# 📊 {db_name} - Database User Manual")
+    md.append(f"\n*Generated by DataMind AI on {analysis_date}*\n")
     
     # Executive Summary
     md.append("## 📋 Executive Summary\n")
-    summary = results['summary']
-    md.append(f"This documentation provides a comprehensive overview of the **{results['database_name']}** database.\n")
+    summary = results.get('summary', {})
+    md.append(f"This documentation provides a comprehensive overview of the **{db_name}** database.\n")
     md.append(f"| Metric | Value |")
     md.append(f"|--------|-------|")
-    md.append(f"| Total Tables | {summary['total_tables']} |")
-    md.append(f"| Total Columns | {summary['total_columns']} |")
-    md.append(f"| Total Rows | {summary['total_rows']:,} |")
-    md.append(f"| Relationships | {summary['total_relationships']} |")
-    md.append(f"| Quality Score | {summary['quality_score']}/100 |")
+    md.append(f"| Total Tables | {summary.get('total_tables', 0)} |")
+    md.append(f"| Total Columns | {summary.get('total_columns', 0)} |")
+    md.append(f"| Total Rows | {summary.get('total_rows', 0):,} |")
+    md.append(f"| Relationships | {summary.get('total_relationships', 0)} |")
+    md.append(f"| Quality Score | {summary.get('quality_score', 0)}/100 |")
     md.append("")
     
     # Table of Contents
     md.append("## 📑 Table of Contents\n")
-    for i, table in enumerate(results['tables'], 1):
+    for i, table in enumerate(results.get('tables', []), 1):
         md.append(f"{i}. [{table['name']}](#{table['name'].lower().replace('_', '-')})")
     md.append("")
     
     # Entity Descriptions
     md.append("---\n## 📦 Entity Descriptions\n")
     
-    for table in results['tables']:
-        md.append(f"### {table['name']}\n")
-        md.append(f"**Type:** {table['table_type'].title()} | **Rows:** {table['row_count']:,}\n")
-        md.append(f"**Description:** {table['business_description']}\n")
+    for table in results.get('tables', []):
+        t_name = table.get('name', 'Unknown')
+        md.append(f"### {t_name}\n")
+        md.append(f"**Type:** {table.get('table_type', 'unknown').title()} | **Rows:** {table.get('row_count', 0):,}\n")
+        md.append(f"**Description:** {table.get('business_description', 'N/A')}\n")
         
         # Columns table
         md.append("| Column | Type | Nullable | Key | Description |")
         md.append("|--------|------|----------|-----|-------------|")
         
-        for col in table['columns']:
+        for col in table.get('columns', []):
             key = ""
-            if col['is_primary_key']:
+            if col.get('is_primary_key'):
                 key = "🔑 PK"
-            elif col['is_foreign_key']:
-                key = f"🔗 FK → {col['references']}"
+            elif col.get('is_foreign_key'):
+                key = f"🔗 FK → {col.get('references', '')}"
             
-            md.append(f"| {col['name']} | {col['data_type']} | {'Yes' if col['nullable'] else 'No'} | {key} | {col['business_description']} |")
+            md.append(f"| {col.get('name', '')} | {col.get('data_type', '')} | {'Yes' if col.get('nullable') else 'No'} | {key} | {col.get('business_description', '')} |")
         
         md.append("")
     
     # Relationships
     md.append("---\n## 🔗 Relationships\n")
     
-    if results['relationships']:
+    relationships = results.get('relationships', [])
+    if relationships:
         md.append("| From Table | Column | To Table | Column | Type |")
         md.append("|------------|--------|----------|--------|------|")
         
-        for rel in results['relationships']:
-            explicit = "✓" if rel['is_explicit'] else "~"
-            md.append(f"| {rel['from_table']} | {rel['from_column']} | {rel['to_table']} | {rel['to_column']} | {rel['relationship_type']} {explicit} |")
+        for rel in relationships:
+            explicit = "✓" if rel.get('is_explicit') else "~"
+            md.append(f"| {rel.get('from_table', '')} | {rel.get('from_column', '')} | {rel.get('to_table', '')} | {rel.get('to_column', '')} | {rel.get('relationship_type', '')} {explicit} |")
     else:
         md.append("*No relationships detected.*")
     
@@ -1693,16 +1751,18 @@ def generate_markdown(results: Dict) -> str:
     
     # Data Quality
     md.append("---\n## 🔍 Data Quality Report\n")
-    md.append(f"**Overall Quality Score: {summary['quality_score']}/100**\n")
+    md.append(f"**Overall Quality Score: {summary.get('quality_score', 0)}/100**\n")
     
-    if results['quality_issues']:
+    quality_issues = results.get('quality_issues', [])
+    if quality_issues:
         md.append("### Issues Found\n")
         md.append("| Table | Column | Issue | Severity | Recommendation |")
         md.append("|-------|--------|-------|----------|----------------|")
         
-        for issue in results['quality_issues']:
-            severity_icon = "🔴" if issue['severity'] == 'high' else "🟡" if issue['severity'] == 'medium' else "🟢"
-            md.append(f"| {issue['table']} | {issue['column']} | {issue['description']} | {severity_icon} {issue['severity']} | {issue['recommendation']} |")
+        for issue in quality_issues:
+            sev = issue.get('severity', 'low')
+            severity_icon = "🔴" if sev == 'high' else "🟡" if sev == 'medium' else "🟢"
+            md.append(f"| {issue.get('table', '')} | {issue.get('column', '')} | {issue.get('description', '')} | {severity_icon} {sev} | {issue.get('recommendation', '')} |")
     else:
         md.append("✅ **No quality issues detected!**")
     
@@ -1711,10 +1771,10 @@ def generate_markdown(results: Dict) -> str:
     # Sample Queries
     md.append("---\n## 📝 Sample Queries\n")
     
-    for query in results['sample_queries']:
-        md.append(f"### {query['title']}\n")
-        md.append(f"{query['description']}\n")
-        md.append(f"```sql\n{query['sql']}\n```\n")
+    for query in results.get('sample_queries', []):
+        md.append(f"### {query.get('title', 'Query')}\n")
+        md.append(f"{query.get('description', '')}\n")
+        md.append(f"```sql\n{query.get('sql', '')}\n```\n")
     
     # Footer
     md.append("---\n*Generated by DataMind AI - No API Key Required* 🚀")
@@ -1842,6 +1902,105 @@ def verify_dataset_integrity(dataset_id):
 
 
 # ============================================================================
+# RAG / Embedding Search API
+# ============================================================================
+
+@app.route('/api/search', methods=['POST'])
+def search_query():
+    """
+    Search the analyzed dataset using natural language queries.
+    
+    Body: { "query": "...", "dataset_id": "...", "top_k": 10, "strategy": "hybrid" }
+    Returns: { "answer": "...", "chunks": [...], "confidence": 0.85, ... }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        query_text = data['query'].strip()
+        if not query_text:
+            return jsonify({'error': 'Query cannot be empty'}), 400
+        
+        # Get dataset_id from request or session
+        dataset_id = data.get('dataset_id') or session.get('dataset_id')
+        if not dataset_id:
+            return jsonify({'error': 'No dataset selected. Please analyze a database first.'}), 400
+        
+        top_k = min(int(data.get('top_k', 10)), 20)
+        strategy = data.get('strategy', 'hybrid')
+        
+        # Check if dataset is indexed, if not, try to index it
+        stats = rag_engine.get_index_stats(dataset_id)
+        if stats is None:
+            # Try to index from stored analysis
+            analysis = versioning_system.get_analysis(dataset_id)
+            if analysis:
+                rag_engine.index_dataset(dataset_id, analysis)
+            else:
+                return jsonify({'error': 'Dataset not analyzed yet. Please analyze first.'}), 404
+        
+        # Execute query
+        response = rag_engine.query(dataset_id, query_text, top_k=top_k, strategy=strategy)
+        
+        # Format response
+        chunks_data = []
+        for r in response.relevant_chunks:
+            chunks_data.append({
+                'content': r.chunk.content,
+                'type': r.chunk.chunk_type,
+                'score': round(r.score, 4),
+                'rank': r.rank,
+                'match_type': r.match_type,
+                'source_table': r.chunk.source_table,
+                'source_column': r.chunk.source_column,
+                'keywords': r.chunk.keywords[:10]
+            })
+        
+        return jsonify({
+            'success': True,
+            'query': response.query,
+            'answer': response.answer,
+            'chunks': chunks_data,
+            'confidence': response.confidence,
+            'processing_time_ms': response.processing_time_ms,
+            'total_chunks_searched': response.total_chunks_searched,
+            'strategy': strategy
+        })
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/index', methods=['POST'])
+def index_dataset_for_search(dataset_id):
+    """Manually trigger indexing of a dataset for search."""
+    try:
+        analysis = versioning_system.get_analysis(dataset_id)
+        if not analysis:
+            return jsonify({'error': 'Analysis not found. Analyze the dataset first.'}), 404
+        
+        stats = rag_engine.index_dataset(dataset_id, analysis)
+        return jsonify({'success': True, **stats})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/index-stats', methods=['GET'])
+def get_index_stats(dataset_id):
+    """Get embedding index statistics for a dataset."""
+    try:
+        stats = rag_engine.get_index_stats(dataset_id)
+        if stats is None:
+            return jsonify({'error': 'Dataset not indexed yet.'}), 404
+        return jsonify({'success': True, **stats})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
 # Generate Charts On Demand
 # ============================================================================
 
@@ -1865,6 +2024,298 @@ def generate_charts_for_dataset(dataset_id):
             'charts_generated': generated,
             'count': len(generated)
         })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# Natural Language → SQL API
+# ============================================================================
+
+def _get_playground(dataset_id: str) -> SQLPlayground:
+    """Get a SQLPlayground instance for a dataset."""
+    raw_path = versioning_system.storage.get_raw_dataset_path(dataset_id)
+    if not raw_path:
+        raise FileNotFoundError(f"Raw dataset not found for {dataset_id}")
+    
+    # Determine file type
+    ext = str(raw_path).rsplit('.', 1)[-1].lower()
+    type_map = {
+        'db': 'sqlite', 'sqlite': 'sqlite', 'sqlite3': 'sqlite',
+        'csv': 'csv', 'tsv': 'csv', 'txt': 'csv',
+        'xlsx': 'excel', 'xls': 'excel', 'xlsm': 'excel',
+        'json': 'json',
+    }
+    file_type = type_map.get(ext, 'sqlite')
+    
+    # Get original table names from schema so CSV/Excel tables match
+    table_names = []
+    try:
+        schema = versioning_system.storage.get_schema(dataset_id)
+        if schema and 'tables' in schema:
+            table_names = [t['name'] for t in schema['tables'] if 'name' in t]
+    except Exception:
+        pass
+    
+    return SQLPlayground(str(raw_path), file_type, table_names=table_names)
+
+
+@app.route('/api/datasets/<dataset_id>/nl2sql', methods=['POST'])
+def nl2sql(dataset_id):
+    """
+    Convert a natural language question to SQL and execute it.
+    
+    Body: { "question": "How many orders per month?", "execute": true }
+    Returns: { "sql": "...", "explanation": "...", "results": {...}, "confidence": 0.85 }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'question' not in data:
+            return jsonify({'error': 'Question is required'}), 400
+        
+        question = data['question'].strip()
+        if not question:
+            return jsonify({'error': 'Question cannot be empty'}), 400
+        
+        should_execute = data.get('execute', True)
+        
+        # Get analysis results for schema
+        analysis = versioning_system.get_analysis(dataset_id)
+        if not analysis:
+            return jsonify({'error': 'Dataset not analyzed yet. Please analyze first.'}), 404
+        
+        # Translate NL to SQL
+        engine = NL2SQLEngine(analysis)
+        query = engine.translate(question)
+        
+        response = {
+            'success': True,
+            'question': question,
+            'sql': query.sql,
+            'explanation': query.explanation,
+            'intent': query.intent,
+            'tables_used': query.tables_used,
+            'columns_used': query.columns_used,
+            'confidence': round(query.confidence, 2),
+            'warnings': query.warnings,
+        }
+        
+        # Execute if requested
+        if should_execute and query.confidence > 0.1:
+            try:
+                playground = _get_playground(dataset_id)
+                result = playground.execute(query.sql)
+                playground.close()
+                
+                response['results'] = {
+                    'success': result.success,
+                    'columns': result.columns,
+                    'rows': result.rows,
+                    'row_count': result.row_count,
+                    'execution_time_ms': result.execution_time_ms,
+                    'error': result.error,
+                }
+            except Exception as exec_err:
+                response['results'] = {
+                    'success': False,
+                    'error': str(exec_err),
+                    'columns': [],
+                    'rows': [],
+                    'row_count': 0,
+                }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/execute-sql', methods=['POST'])
+def execute_sql(dataset_id):
+    """
+    Execute a raw SQL query on the dataset.
+    
+    Body: { "sql": "SELECT * FROM orders LIMIT 10" }
+    Returns: { "columns": [...], "rows": [...], "row_count": 10 }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'sql' not in data:
+            return jsonify({'error': 'SQL query is required'}), 400
+        
+        sql = data['sql'].strip()
+        if not sql:
+            return jsonify({'error': 'SQL query cannot be empty'}), 400
+        
+        playground = _get_playground(dataset_id)
+        result = playground.execute(sql)
+        playground.close()
+        
+        return jsonify({
+            'success': result.success,
+            'sql': result.sql,
+            'columns': result.columns,
+            'rows': result.rows,
+            'row_count': result.row_count,
+            'execution_time_ms': result.execution_time_ms,
+            'error': result.error,
+        })
+        
+    except FileNotFoundError:
+        return jsonify({'error': 'Raw dataset file not found. Re-upload may be needed.'}), 404
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/preview/<table_name>', methods=['GET'])
+def preview_table(dataset_id, table_name):
+    """
+    Get a preview of table data (first 50 rows).
+    
+    Query params: ?limit=50
+    Returns: { "columns": [...], "rows": [...], "row_count": 50, "table_name": "..." }
+    """
+    try:
+        limit = min(int(request.args.get('limit', 50)), 500)
+        
+        playground = _get_playground(dataset_id)
+        result = playground.get_table_preview(table_name, limit)
+        playground.close()
+        
+        return jsonify({
+            'success': result.success,
+            'table_name': table_name,
+            'columns': result.columns,
+            'rows': result.rows,
+            'row_count': result.row_count,
+            'execution_time_ms': result.execution_time_ms,
+            'error': result.error,
+        })
+        
+    except FileNotFoundError:
+        return jsonify({'error': 'Raw dataset file not found.'}), 404
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/tables-list', methods=['GET'])
+def list_sql_tables(dataset_id):
+    """Get list of tables available for SQL queries."""
+    try:
+        playground = _get_playground(dataset_id)
+        tables = playground.get_tables()
+        playground.close()
+        
+        return jsonify({
+            'success': True,
+            'tables': tables,
+        })
+    except FileNotFoundError:
+        return jsonify({'error': 'Raw dataset file not found.'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/datasets/<dataset_id>/er-diagram', methods=['GET'])
+def get_er_diagram(dataset_id):
+    """
+    Generate a Mermaid ER diagram from the analysis.
+    
+    Returns: { "mermaid": "erDiagram...", "tables": [...] }
+    """
+    try:
+        analysis = versioning_system.get_analysis(dataset_id)
+        if not analysis:
+            return jsonify({'error': 'Dataset not analyzed yet.'}), 404
+        
+        tables = analysis.get('tables', [])
+        relationships = analysis.get('relationships', [])
+        
+        # Build Mermaid ER diagram
+        lines = ['erDiagram']
+        
+        for table in tables:
+            tname = table['name'].replace(' ', '_')
+            lines.append(f'    {tname} {{')
+            for col in table.get('columns', [])[:15]:  # Limit columns for readability
+                cname = col['name'].replace(' ', '_')
+                dtype = col.get('data_type', 'TEXT').replace(' ', '_')
+                pk_marker = ' PK' if col.get('is_primary_key') else ''
+                fk_marker = ' FK' if col.get('is_foreign_key') else ''
+                marker = pk_marker or fk_marker
+                lines.append(f'        {dtype} {cname}{marker}')
+            lines.append('    }')
+        
+        # Add relationships
+        for rel in relationships:
+            ft = rel.get('from_table', '').replace(' ', '_')
+            tt = rel.get('to_table', '').replace(' ', '_')
+            rel_type = rel.get('relationship_type', 'many-to-one')
+            is_explicit = rel.get('is_explicit', True)
+            
+            # Mermaid relationship symbols
+            if rel_type == 'one-to-one':
+                symbol = '||--||'
+            elif rel_type == 'one-to-many':
+                symbol = '||--o{'
+            elif rel_type == 'many-to-many':
+                symbol = '}o--o{'
+            else:
+                symbol = '}o--||'  # many-to-one
+            
+            label = rel.get('from_column', '')
+            line_style = symbol if is_explicit else symbol.replace('-', '.')
+            lines.append(f'    {ft} {line_style} {tt} : "{label}"')
+        
+        mermaid_code = '\n'.join(lines)
+        
+        # Also return structured data for interactive features
+        nodes = []
+        for table in tables:
+            nodes.append({
+                'id': table['name'],
+                'name': table['name'],
+                'type': table.get('table_type', 'unknown'),
+                'row_count': table.get('row_count', 0),
+                'column_count': len(table.get('columns', [])),
+                'columns': [
+                    {
+                        'name': c['name'],
+                        'type': c.get('data_type', ''),
+                        'is_pk': c.get('is_primary_key', False),
+                        'is_fk': c.get('is_foreign_key', False),
+                        'semantic_type': c.get('semantic_type', ''),
+                    }
+                    for c in table.get('columns', [])
+                ],
+            })
+        
+        edges = []
+        for rel in relationships:
+            edges.append({
+                'from': rel.get('from_table', ''),
+                'from_column': rel.get('from_column', ''),
+                'to': rel.get('to_table', ''),
+                'to_column': rel.get('to_column', ''),
+                'type': rel.get('relationship_type', ''),
+                'explicit': rel.get('is_explicit', True),
+            })
+        
+        return jsonify({
+            'success': True,
+            'mermaid': mermaid_code,
+            'nodes': nodes,
+            'edges': edges,
+        })
+        
     except Exception as e:
         import traceback
         traceback.print_exc()

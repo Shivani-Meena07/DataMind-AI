@@ -1,0 +1,431 @@
+[
+  {
+    "chunk_id": "db_0001",
+    "content": "The database 'netflix_titles' is a CSV database containing 1 tables with 12 total columns and 8807 total records. Tables: netflix_titles. It has 0 relationships detected and a data quality score of 100/100. 0 quality issues were found.",
+    "chunk_type": "db_overview",
+    "metadata": {
+      "total_tables": 1,
+      "total_columns": 12,
+      "total_rows": 8807,
+      "total_relationships": 0,
+      "quality_issues": 0,
+      "quality_score": 100
+    },
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "database",
+      "overview",
+      "summary",
+      "tables",
+      "schema",
+      "netflix_titles",
+      "netflix_titles"
+    ],
+    "importance_score": 2.0
+  },
+  {
+    "chunk_id": "tbl_0002",
+    "content": "Table 'netflix_titles' is a dimension table with 12 columns and 8,807 rows. Description: Master data table containing reference information with columns: show_id, type, title, director, cast. Columns: show_id, type, title, director, cast, country, date_added, release_year, rating, duration, listed_in, description.",
+    "chunk_type": "table_overview",
+    "metadata": {
+      "row_count": 8807,
+      "column_count": 12,
+      "table_type": "dimension"
+    },
+    "source_table": "netflix_titles",
+    "source_column": "",
+    "keywords": [
+      "table",
+      "netflix_titles",
+      "dimension",
+      "schema",
+      "structure",
+      "show_id",
+      "type",
+      "title",
+      "director",
+      "cast",
+      "country",
+      "date_added",
+      "release_year",
+      "rating",
+      "duration",
+      "listed_in",
+      "description"
+    ],
+    "importance_score": 1.5
+  },
+  {
+    "chunk_id": "col_0003",
+    "content": "Column 'show_id' in table 'netflix_titles': data type TEXT, not nullable. primary key. semantic type: identifier. Unique identifier for the record No null values. 8,807 unique values (100.0% uniqueness). Sample values: s1, s2, s3, s4, s5.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": true,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 8807
+    },
+    "source_table": "netflix_titles",
+    "source_column": "show_id",
+    "keywords": [
+      "show_id",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "primary key",
+      "pk",
+      "identifier"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0004",
+    "content": "Column 'type' in table 'netflix_titles': data type TEXT, not nullable. semantic type: category. Type or classification No null values. 2 unique values (0.0% uniqueness). Sample values: Movie, TV Show, TV Show, TV Show, TV Show.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 2
+    },
+    "source_table": "netflix_titles",
+    "source_column": "type",
+    "keywords": [
+      "type",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "category"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0005",
+    "content": "Column 'title' in table 'netflix_titles': data type TEXT, not nullable. semantic type: text. Data field of type TEXT No null values. 8,807 unique values (100.0% uniqueness). Sample values: Dick Johnson Is Dead, Blood & Water, Ganglands, Jailbirds New Orleans, Kota Factory.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 8807
+    },
+    "source_table": "netflix_titles",
+    "source_column": "title",
+    "keywords": [
+      "title",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "text"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0006",
+    "content": "Column 'director' in table 'netflix_titles': data type TEXT, nullable. semantic type: text. Data field of type TEXT 29.9% null values. 4,528 unique values (51.4% uniqueness). Sample values: Kirsten Johnson, Julien Leclercq, Mike Flanagan, Robert Cullen, José Luis Ucha, Haile Gerima.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 29.9,
+      "unique_count": 4528
+    },
+    "source_table": "netflix_titles",
+    "source_column": "director",
+    "keywords": [
+      "director",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "text"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0007",
+    "content": "Column 'cast' in table 'netflix_titles': data type TEXT, nullable. semantic type: text. Data field of type TEXT 9.4% null values. 7,692 unique values (87.3% uniqueness). Sample values: Ama Qamata, Khosi Ngema, Gail Mabalane, Thabang Molaba, Dillon Windvogel, Natasha Thahane, Arno Greeff, Xolile Tshabalala, Getmore Sithole, Cindy Mahlangu, Ryle De Morny, Greteli Fincham, Sello Maake Ka-Ncube, Odwa Gwanya, Mekaila Mathys, Sandi Schultz, Duane Williams, Shamilla Miller, Patrick Mofokeng, Sami Bouajila, Tracy Gotoas, Samuel Jouy, Nabiha Akkari, Sofia Lesaffre, Salim Kechiouche, Noureddine Farihi, Geert Van Rampelberg, Bakary Diombera, Mayur More, Jitendra Kumar, Ranjan Raj, Alam Khan, Ahsaas Channa, Revathi Pillai, Urvi Singh, Arun Kumar, Kate Siegel, Zach Gilford, Hamish Linklater, Henry Thomas, Kristin Lehman, Samantha Sloyan, Igby Rigney, Rahul Kohli, Annarah Cymone, Annabeth Gish, Alex Essoe, Rahul Abburi, Matt Biedel, Michael Trucco, Crystal Balint, Louis Oliver, Vanessa Hudgens, Kimiko Glenn, James Marsden, Sofia Carson, Liza Koshy, Ken Jeong, Elizabeth Perkins, Jane Krakowski, Michael McKean, Phil LaMarr.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 9.4,
+      "unique_count": 7692
+    },
+    "source_table": "netflix_titles",
+    "source_column": "cast",
+    "keywords": [
+      "cast",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "text"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0008",
+    "content": "Column 'country' in table 'netflix_titles': data type TEXT, nullable. semantic type: address. Country name or code 9.4% null values. 748 unique values (8.5% uniqueness). Sample values: United States, South Africa, India, United States, Ghana, Burkina Faso, United Kingdom, Germany, Ethiopia, United Kingdom.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 9.4,
+      "unique_count": 748
+    },
+    "source_table": "netflix_titles",
+    "source_column": "country",
+    "keywords": [
+      "country",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "address"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0009",
+    "content": "Column 'date_added' in table 'netflix_titles': data type TEXT, nullable. semantic type: text. Date of the event or record 0.1% null values. 1,767 unique values (20.1% uniqueness). Sample values: September 25, 2021, September 24, 2021, September 24, 2021, September 24, 2021, September 24, 2021.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.1,
+      "unique_count": 1767
+    },
+    "source_table": "netflix_titles",
+    "source_column": "date_added",
+    "keywords": [
+      "date_added",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "text"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0010",
+    "content": "Column 'release_year' in table 'netflix_titles': data type INTEGER, not nullable. semantic type: unknown. Data field of type INTEGER No null values. 74 unique values (0.8% uniqueness). Sample values: 2020, 2021, 2021, 2021, 2021.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "INTEGER",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 74
+    },
+    "source_table": "netflix_titles",
+    "source_column": "release_year",
+    "keywords": [
+      "release_year",
+      "netflix_titles",
+      "integer",
+      "column",
+      "field",
+      "unknown"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0011",
+    "content": "Column 'rating' in table 'netflix_titles': data type TEXT, nullable. semantic type: score. Numeric score, rating, or rank No null values. 17 unique values (0.2% uniqueness). Sample values: PG-13, TV-MA, TV-MA, TV-MA, TV-MA.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 17
+    },
+    "source_table": "netflix_titles",
+    "source_column": "rating",
+    "keywords": [
+      "rating",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "score"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0012",
+    "content": "Column 'duration' in table 'netflix_titles': data type TEXT, nullable. semantic type: percentage. Percentage or ratio value No null values. 220 unique values (2.5% uniqueness). Sample values: 90 min, 2 Seasons, 1 Season, 1 Season, 2 Seasons.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 220
+    },
+    "source_table": "netflix_titles",
+    "source_column": "duration",
+    "keywords": [
+      "duration",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "percentage"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0013",
+    "content": "Column 'listed_in' in table 'netflix_titles': data type TEXT, not nullable. semantic type: text. Data field of type TEXT No null values. 514 unique values (5.8% uniqueness). Sample values: Documentaries, International TV Shows, TV Dramas, TV Mysteries, Crime TV Shows, International TV Shows, TV Action & Adventure, Docuseries, Reality TV, International TV Shows, Romantic TV Shows, TV Comedies.",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 514
+    },
+    "source_table": "netflix_titles",
+    "source_column": "listed_in",
+    "keywords": [
+      "listed_in",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "text"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "col_0014",
+    "content": "Column 'description' in table 'netflix_titles': data type TEXT, not nullable. semantic type: description. Detailed description text No null values. 8,775 unique values (99.6% uniqueness). Sample values: As her father nears the end of his life, filmmaker Kirsten Johnson stages his death in inventive and comical ways to help them both face the inevitable., After crossing paths at a party, a Cape Town teen sets out to prove whether a private-school swimming star is her sister who was abducted at birth., To protect his family from a powerful drug lord, skilled thief Mehdi and his expert team of robbers are pulled into a violent and deadly turf war., Feuds, flirtations and toilet talk go down among the incarcerated women at the Orleans Justice Center in New Orleans on this gritty reality series., In a city of coaching centers known to train India’s finest collegiate minds, an earnest but unexceptional student and his friends navigate campus life..",
+    "chunk_type": "column_detail",
+    "metadata": {
+      "data_type": "TEXT",
+      "is_pk": false,
+      "is_fk": false,
+      "null_percentage": 0.0,
+      "unique_count": 8775
+    },
+    "source_table": "netflix_titles",
+    "source_column": "description",
+    "keywords": [
+      "description",
+      "netflix_titles",
+      "text",
+      "column",
+      "field",
+      "description"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "qry_0015",
+    "content": "Sample query - View netflix_titles data: Retrieve sample records from netflix_titles. SQL: SELECT * FROM \"netflix_titles\" LIMIT 10;",
+    "chunk_type": "query",
+    "metadata": {
+      "title": "View netflix_titles data",
+      "description": "Retrieve sample records from netflix_titles",
+      "sql": "SELECT * FROM \"netflix_titles\" LIMIT 10;"
+    },
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "query",
+      "sql",
+      "select",
+      "join",
+      "example",
+      "select",
+      "from",
+      "netflix_titles",
+      "limit"
+    ],
+    "importance_score": 0.8
+  },
+  {
+    "chunk_id": "xref_0016",
+    "content": "Data type distribution across all tables: 11 TEXT, 1 INTEGER.",
+    "chunk_type": "cross_table",
+    "metadata": {},
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "data type",
+      "distribution",
+      "schema",
+      "column types"
+    ],
+    "importance_score": 0.7
+  },
+  {
+    "chunk_id": "xref_0017",
+    "content": "Largest table: 'netflix_titles' with 8,807 rows. Smallest table: 'netflix_titles' with 8,807 rows.",
+    "chunk_type": "cross_table",
+    "metadata": {},
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "largest",
+      "smallest",
+      "rows",
+      "size",
+      "table"
+    ],
+    "importance_score": 0.8
+  },
+  {
+    "chunk_id": "xref_0018",
+    "content": "Columns with high null percentages (>20%): netflix_titles.director (29.9% null).",
+    "chunk_type": "cross_table",
+    "metadata": {},
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "null",
+      "missing",
+      "empty",
+      "incomplete",
+      "data quality"
+    ],
+    "importance_score": 1.0
+  },
+  {
+    "chunk_id": "stat_0019",
+    "content": "Database statistics: 1 tables, 12 columns, 8,807 total rows, 0 relationships, quality score 100/100.",
+    "chunk_type": "stat",
+    "metadata": {
+      "total_tables": 1,
+      "total_columns": 12,
+      "total_rows": 8807,
+      "total_relationships": 0,
+      "quality_issues": 0,
+      "quality_score": 100
+    },
+    "source_table": "",
+    "source_column": "",
+    "keywords": [
+      "statistics",
+      "count",
+      "total",
+      "numbers",
+      "how many"
+    ],
+    "importance_score": 1.5
+  }
+]

@@ -880,11 +880,9 @@ class VectorStore:
         selected = []
         remaining = set(range(n))
         
-        # Get TF-IDF vectors for diversity calculation
-        if self.tfidf_matrix is not None:
-            doc_sim_matrix = cosine_similarity(self.tfidf_matrix)
-        else:
-            doc_sim_matrix = np.eye(n)
+        # Pre-filter: only consider candidates with scores > threshold
+        candidates = {i for i in remaining if scores[i] >= 0.01}
+        remaining = candidates
         
         for _ in range(min(top_k, n)):
             if not remaining:
@@ -894,16 +892,17 @@ class VectorStore:
             best_mmr = -float('inf')
             
             for idx in remaining:
-                if scores[idx] < 0.01:
-                    continue
-                
                 relevance = scores[idx]
                 
-                # Max similarity to already selected docs
-                max_sim = 0
-                for sel_idx in selected:
-                    sim = doc_sim_matrix[idx][sel_idx] if self.tfidf_matrix is not None else 0
-                    max_sim = max(max_sim, sim)
+                # Compute pairwise similarity on-demand (avoids N×N dense matrix)
+                max_sim = 0.0
+                if selected and self.tfidf_matrix is not None:
+                    idx_vec = self.tfidf_matrix[idx]
+                    for sel_idx in selected:
+                        sel_vec = self.tfidf_matrix[sel_idx]
+                        sim = cosine_similarity(idx_vec, sel_vec)[0, 0]
+                        if sim > max_sim:
+                            max_sim = sim
                 
                 mmr = lambda_param * relevance - (1 - lambda_param) * max_sim
                 
@@ -915,7 +914,7 @@ class VectorStore:
                 break
             
             selected.append(best_idx)
-            remaining.remove(best_idx)
+            remaining.discard(best_idx)
         
         results = []
         for rank, idx in enumerate(selected):
@@ -946,8 +945,13 @@ class VectorStore:
             with open(index_dir / 'tfidf_vectorizer.pkl', 'wb') as f:
                 pickle.dump(self.tfidf_vectorizer, f)
             
-            from scipy import sparse
-            sparse.save_npz(index_dir / 'tfidf_matrix.npz', self.tfidf_matrix)
+            try:
+                from scipy import sparse as sp_sparse
+                sp_sparse.save_npz(index_dir / 'tfidf_matrix.npz', self.tfidf_matrix)
+            except ImportError:
+                # Fallback: pickle the sparse matrix when scipy is unavailable
+                with open(index_dir / 'tfidf_matrix.pkl', 'wb') as f:
+                    pickle.dump(self.tfidf_matrix, f)
         
         # Save BM25
         with open(index_dir / 'bm25.pkl', 'wb') as f:
@@ -987,12 +991,21 @@ class VectorStore:
             
             # Load TF-IDF
             tfidf_path = index_dir / 'tfidf_vectorizer.pkl'
-            matrix_path = index_dir / 'tfidf_matrix.npz'
-            if tfidf_path.exists() and matrix_path.exists():
+            matrix_npz = index_dir / 'tfidf_matrix.npz'
+            matrix_pkl = index_dir / 'tfidf_matrix.pkl'
+            if tfidf_path.exists():
                 with open(tfidf_path, 'rb') as f:
                     self.tfidf_vectorizer = pickle.load(f)
-                from scipy import sparse
-                self.tfidf_matrix = sparse.load_npz(matrix_path)
+                if matrix_npz.exists():
+                    try:
+                        from scipy import sparse as sp_sparse
+                        self.tfidf_matrix = sp_sparse.load_npz(matrix_npz)
+                    except ImportError:
+                        print('[VectorStore] scipy unavailable, cannot load .npz; will rebuild index')
+                        self.tfidf_vectorizer = None
+                elif matrix_pkl.exists():
+                    with open(matrix_pkl, 'rb') as f:
+                        self.tfidf_matrix = pickle.load(f)
             
             # Load BM25
             bm25_path = index_dir / 'bm25.pkl'
@@ -1152,11 +1165,14 @@ class RAGEngine:
         response = rag.query(dataset_id, "How many tables are there?")
     """
     
+    MAX_CACHED_STORES = 10  # LRU eviction threshold
+
     def __init__(self, storage_path: Optional[str] = None):
         self.storage_path = storage_path
         self.chunker = SchemaChunker()
         self.response_generator = ResponseGenerator()
         self._stores: Dict[str, VectorStore] = {}  # dataset_id -> VectorStore
+        self._access_order: List[str] = []  # LRU tracking
     
     def index_dataset(self, dataset_id: str, analysis_results: Dict) -> Dict:
         """
@@ -1175,7 +1191,7 @@ class RAGEngine:
         # Check for cached index
         store = VectorStore(storage_path=self.storage_path)
         if store.load_index(dataset_id):
-            self._stores[dataset_id] = store
+            self._cache_store(dataset_id, store)
             return {
                 'status': 'loaded_from_cache',
                 'chunk_count': len(store.chunks),
@@ -1194,7 +1210,7 @@ class RAGEngine:
         store.save_index(dataset_id)
         
         # Cache in memory
-        self._stores[dataset_id] = store
+        self._cache_store(dataset_id, store)
         
         elapsed = (time.time() - start) * 1000
         
@@ -1261,15 +1277,33 @@ class RAGEngine:
             total_chunks_searched=len(store.chunks)
         )
     
+    def _cache_store(self, dataset_id: str, store: VectorStore):
+        """Cache a VectorStore with LRU eviction."""
+        # Update access order
+        if dataset_id in self._access_order:
+            self._access_order.remove(dataset_id)
+        self._access_order.append(dataset_id)
+        self._stores[dataset_id] = store
+        
+        # Evict oldest if over limit
+        while len(self._stores) > self.MAX_CACHED_STORES:
+            oldest_id = self._access_order.pop(0)
+            self._stores.pop(oldest_id, None)
+            print(f"[RAG] Evicted cached store for {oldest_id[:16]}...")
+
     def _get_store(self, dataset_id: str) -> Optional[VectorStore]:
         """Get vector store, loading from disk if needed."""
         if dataset_id in self._stores:
+            # Update LRU access order
+            if dataset_id in self._access_order:
+                self._access_order.remove(dataset_id)
+            self._access_order.append(dataset_id)
             return self._stores[dataset_id]
         
         # Try loading from disk
         store = VectorStore(storage_path=self.storage_path)
         if store.load_index(dataset_id):
-            self._stores[dataset_id] = store
+            self._cache_store(dataset_id, store)
             return store
         
         return None

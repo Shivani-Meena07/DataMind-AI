@@ -301,6 +301,29 @@
             background: #ecfeff;
         }
         
+        /* Search Strategy Buttons */
+        .search-strategy-btn {
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7280;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .search-strategy-btn:hover {
+            color: #06b6d4;
+            border-color: #06b6d4;
+            background: #ecfeff;
+        }
+        .search-strategy-btn.active {
+            color: #fff;
+            background: #06b6d4;
+            border-color: #06b6d4;
+        }
+        
         /* Code Block */
         .code-block {
             background: #1e293b;
@@ -800,6 +823,9 @@
                 <button class="tab-btn" data-tab="charts">
                     <i class="fas fa-chart-bar mr-2"></i>Charts
                 </button>
+                <button class="tab-btn" data-tab="search">
+                    <i class="fas fa-brain mr-2"></i>AI Search
+                </button>
                 <button class="tab-btn" data-tab="tables">
                     <i class="fas fa-table mr-2"></i>Tables
                 </button>
@@ -811,6 +837,15 @@
                 </button>
                 <button class="tab-btn" data-tab="queries">
                     <i class="fas fa-code mr-2"></i>Queries
+                </button>
+                <button class="tab-btn" data-tab="sqllab">
+                    <i class="fas fa-terminal mr-2"></i>SQL Lab
+                </button>
+                <button class="tab-btn" data-tab="erdiagram">
+                    <i class="fas fa-sitemap mr-2"></i>ER Diagram
+                </button>
+                <button class="tab-btn" data-tab="datapreview">
+                    <i class="fas fa-eye mr-2"></i>Data Preview
                 </button>
                 <button class="tab-btn" data-tab="export">
                     <i class="fas fa-download mr-2"></i>Export
@@ -840,7 +875,7 @@
                         <i class="fas fa-envelope mr-2"></i>Contact
                     </a>
                     <a href="#" class="hover:text-brand transition-colors">Privacy Policy</a>
-                    <a href="https://github.com" class="hover:text-brand transition-colors">
+                    <a href="https://github.com/Shivani-Meena07/DataMind-AI" class="hover:text-brand transition-colors">
                         <i class="fab fa-github mr-2"></i>GitHub
                     </a>
                 </div>
@@ -1016,6 +1051,17 @@
                 const uploadResult = await uploadFile();
                 console.log('Upload completed, result:', uploadResult);
                 if (uploadResult.error) throw new Error(uploadResult.error);
+                
+                // Show dataset ID and cache status
+                if (uploadResult.dataset_id) {
+                    const cacheBadge = uploadResult.is_cached 
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800 ml-2"><i class="fas fa-bolt mr-1"></i>Cached</span>'
+                        : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 ml-2"><i class="fas fa-sparkles mr-1"></i>New</span>';
+                    showStatus(
+                        `<i class="fas fa-fingerprint mr-1 text-brand"></i><span class="font-bold tracking-wider text-cyan-700" style="letter-spacing:0.08em">${uploadResult.dataset_id}</span>${cacheBadge} — ${uploadResult.cache_message}`,
+                        uploadResult.is_cached ? 'success' : 'info'
+                    );
+                }
 
                 console.log('Calling /api/analyze...');
                 const response = await fetch('/api/analyze', { method: 'POST' });
@@ -1102,7 +1148,34 @@
             const totalRows = summary.total_rows ?? 0;
             const totalRelationships = summary.total_relationships ?? analysisResults?.relationships?.length ?? 0;
             
+            // Dataset ID and cache info
+            const cacheInfo = analysisResults?._cache_info || {};
+            const datasetId = cacheInfo.dataset_id || analysisResults?.dataset_id || '';
+            const isCached = cacheInfo.is_cached || false;
+            
+            // Build dataset ID badge HTML
+            let idBadgeHtml = '';
+            if (datasetId) {
+                const cachePill = isCached 
+                    ? '<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full"><i class="fas fa-bolt mr-1"></i>Cached</span>'
+                    : '<span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full"><i class="fas fa-plus mr-1"></i>Fresh</span>';
+                idBadgeHtml = `
+                <div class="col-span-full bg-gradient-to-r from-slate-50 to-cyan-50 rounded-xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-brand text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 font-medium">Dataset ID</div>
+                            <div class="text-sm font-bold text-gray-800 tracking-wider" style="letter-spacing:0.1em">${datasetId}${cachePill}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-400">${cacheInfo.message || ''}</div>
+                </div>`;
+            }
+            
             statsGrid.innerHTML = `
+                ${idBadgeHtml}
                 <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -1168,10 +1241,14 @@
             switch(tabId) {
                 case 'overview': return generateOverviewTab();
                 case 'charts': return generateChartsTab();
+                case 'search': return generateSearchTab();
                 case 'tables': return generateTablesTab();
                 case 'relationships': return generateRelationshipsTab();
                 case 'quality': return generateQualityTab();
                 case 'queries': return generateQueriesTab();
+                case 'sqllab': return generateSQLLabTab();
+                case 'erdiagram': return generateERDiagramTab();
+                case 'datapreview': return generateDataPreviewTab();
                 case 'export': return generateExportTab();
                 default: return '';
             }
@@ -1262,32 +1339,37 @@
             `;
         }
 
+        // Helper: Safely get full dataset_id from analysis results
+        function getDatasetId() {
+            return analysisResults?.dataset_id || '';
+        }
+
         function generateChartsTab() {
             // Get dataset_id from results if available
-            const datasetId = analysisResults.dataset_id || analysisResults.fingerprint || '';
+            const datasetId = getDatasetId();
             
             // Define all chart types with their info
             const chartTypes = [
                 { 
-                    name: 'bar_table_size_distribution', 
+                    name: 'bar_table_size', 
                     title: 'Table Size Distribution', 
                     icon: 'fa-chart-bar',
                     description: 'Row count distribution across all tables'
                 },
                 { 
-                    name: 'donut_table_type_distribution', 
+                    name: 'donut_table_type', 
                     title: 'Table Types', 
                     icon: 'fa-chart-pie',
                     description: 'Distribution of fact vs dimension tables'
                 },
                 { 
-                    name: 'gauge_quality_score', 
+                    name: 'gauge_quality', 
                     title: 'Quality Score', 
                     icon: 'fa-tachometer-alt',
                     description: 'Overall data quality assessment gauge'
                 },
                 { 
-                    name: 'bar_column_type_distribution', 
+                    name: 'bar_column_types', 
                     title: 'Column Data Types', 
                     icon: 'fa-columns',
                     description: 'Distribution of column data types'
@@ -1305,19 +1387,19 @@
                     description: 'Heatmap showing relationship strengths'
                 },
                 { 
-                    name: 'heatmap_null_distribution', 
+                    name: 'heatmap_null', 
                     title: 'Null Value Heatmap', 
                     icon: 'fa-border-none',
                     description: 'Null percentage distribution by table'
                 },
                 { 
-                    name: 'bar_null_columns', 
+                    name: 'bar_null_distribution', 
                     title: 'Columns with Nulls', 
                     icon: 'fa-times-circle',
                     description: 'Top columns with null values'
                 },
                 { 
-                    name: 'bar_quality_issues_severity', 
+                    name: 'bar_quality_issues', 
                     title: 'Quality Issues', 
                     icon: 'fa-exclamation-triangle',
                     description: 'Quality issues by severity level'
@@ -1329,16 +1411,70 @@
                     description: 'Multi-dimensional quality assessment'
                 },
                 { 
-                    name: 'hierarchy_table_dependencies', 
+                    name: 'hierarchy_tables', 
                     title: 'Table Hierarchy', 
                     icon: 'fa-sitemap',
                     description: 'Table dependency hierarchy tree'
                 },
                 { 
-                    name: 'matrix_schema_overview', 
+                    name: 'matrix_overview', 
                     title: 'Schema Overview', 
                     icon: 'fa-th-large',
                     description: 'Comprehensive schema analysis matrix'
+                },
+                { 
+                    name: 'treemap_tables', 
+                    title: 'Table Treemap', 
+                    icon: 'fa-th',
+                    description: 'Space-filling treemap of table sizes'
+                },
+                { 
+                    name: 'density_heatmap', 
+                    title: 'Data Density', 
+                    icon: 'fa-fire',
+                    description: 'Rows × Columns data density per table'
+                },
+                { 
+                    name: 'table_dna', 
+                    title: 'Table DNA', 
+                    icon: 'fa-dna',
+                    description: 'Column composition barcode strips'
+                },
+                { 
+                    name: 'column_fingerprint', 
+                    title: 'Column Fingerprint', 
+                    icon: 'fa-fingerprint',
+                    description: 'Uniqueness vs completeness scatter'
+                },
+                { 
+                    name: 'sankey_dataflow', 
+                    title: 'Data Flow', 
+                    icon: 'fa-stream',
+                    description: 'Sankey-style data flow between tables'
+                },
+                { 
+                    name: 'constellation_schema', 
+                    title: 'Schema Constellation', 
+                    icon: 'fa-star',
+                    description: 'Force-directed constellation map'
+                },
+                { 
+                    name: 'fk_coverage_ring', 
+                    title: 'FK Coverage', 
+                    icon: 'fa-bullseye',
+                    description: 'Foreign key interconnection coverage'
+                },
+                { 
+                    name: 'sunburst_hierarchy', 
+                    title: 'Sunburst Hierarchy', 
+                    icon: 'fa-sun',
+                    description: 'Database → Tables → Column Types'
+                },
+                { 
+                    name: 'violin_distribution', 
+                    title: 'Distribution Stats', 
+                    icon: 'fa-chart-line',
+                    description: 'Statistical distribution with summary'
                 },
             ];
 
@@ -1432,7 +1568,7 @@
 
         // Function to refresh/generate charts
         async function refreshCharts() {
-            const datasetId = analysisResults?.dataset_id || analysisResults?._cache_info?.dataset_id || analysisResults?.fingerprint;
+            const datasetId = getDatasetId();
             console.log('refreshCharts called, datasetId:', datasetId);
             console.log('analysisResults keys:', analysisResults ? Object.keys(analysisResults) : 'null');
             if (!datasetId) {
@@ -1462,12 +1598,15 @@
 
                 const result = await generateResponse.json();
                 
-                // Load each chart
+                // Load each chart and track success count
                 const chartContainers = document.querySelectorAll('.chart-container');
+                let loadedCount = 0;
                 for (const container of chartContainers) {
                     const chartName = container.dataset.chartName;
-                    await loadChart(datasetId, chartName, container);
+                    const loaded = await loadChart(datasetId, chartName, container);
+                    if (loaded) loadedCount++;
                 }
+                console.log(`Charts loaded: ${loadedCount}/${chartContainers.length}`);
             } catch (error) {
                 console.error('Error generating charts:', error);
                 document.querySelectorAll('.chart-container').forEach(container => {
@@ -1481,7 +1620,7 @@
             }
         }
 
-        // Function to load a single chart
+        // Function to load a single chart — returns true if successfully loaded
         async function loadChart(datasetId, chartName, container) {
             try {
                 const response = await fetch(`/api/datasets/${datasetId}/charts/${chartName}`);
@@ -1496,13 +1635,16 @@
                              onclick="openChartModal(this.src, '${chartName}')"
                              title="Click to enlarge">
                     `;
+                    return true;
                 } else {
                     container.innerHTML = `
-                        <div class="text-center text-gray-400">
-                            <i class="fas fa-chart-area text-4xl mb-2 opacity-30"></i>
-                            <p class="text-sm">Chart not available</p>
+                        <div class="text-center text-gray-400 py-6">
+                            <i class="fas fa-database text-3xl mb-2 opacity-30"></i>
+                            <p class="text-sm font-medium text-gray-500">Insufficient Data</p>
+                            <p class="text-xs text-gray-400 mt-1">This chart needs more tables or relationships</p>
                         </div>
                     `;
+                    return false;
                 }
             } catch (error) {
                 console.error(`Error loading chart ${chartName}:`, error);
@@ -1512,6 +1654,7 @@
                         <p class="text-sm">Failed to load</p>
                     </div>
                 `;
+                return false;
             }
         }
 
@@ -1815,6 +1958,299 @@
             `;
         }
 
+        // ================================================================
+        // AI Search / RAG Tab
+        // ================================================================
+        function generateSearchTab() {
+            return `
+                <div class="animate-fade-in">
+                    <!-- Search Header -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <i class="fas fa-brain text-brand"></i>
+                                AI-Powered Search
+                            </h3>
+                            <p class="text-gray-500 mt-1 text-sm">Ask natural language questions about your database schema, relationships, data quality, and more.</p>
+                        </div>
+                        <div class="p-6">
+                            <!-- Search Box -->
+                            <div class="flex gap-3 mb-4">
+                                <div class="flex-1 relative">
+                                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" id="ragSearchInput" 
+                                        placeholder="e.g. Which tables have the most null values? / How are orders and customers related?"
+                                        class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none text-sm bg-gray-50 transition-all"
+                                        onkeydown="if(event.key==='Enter') executeRAGSearch()"
+                                    />
+                                </div>
+                                <button onclick="executeRAGSearch()" 
+                                    class="px-6 py-3.5 bg-brand text-white rounded-xl font-medium hover:bg-brand/90 transition-all flex items-center gap-2 whitespace-nowrap shadow-sm">
+                                    <i class="fas fa-paper-plane"></i> Search
+                                </button>
+                            </div>
+
+                            <!-- Strategy selector -->
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="text-xs text-gray-500 font-medium">Strategy:</span>
+                                <div class="flex gap-1.5">
+                                    <button class="search-strategy-btn active" data-strategy="hybrid" onclick="selectSearchStrategy(this)">
+                                        <i class="fas fa-layer-group mr-1"></i>Hybrid
+                                    </button>
+                                    <button class="search-strategy-btn" data-strategy="tfidf" onclick="selectSearchStrategy(this)">
+                                        <i class="fas fa-vector-square mr-1"></i>TF-IDF
+                                    </button>
+                                    <button class="search-strategy-btn" data-strategy="bm25" onclick="selectSearchStrategy(this)">
+                                        <i class="fas fa-sort-amount-down mr-1"></i>BM25
+                                    </button>
+                                    <button class="search-strategy-btn" data-strategy="keyword" onclick="selectSearchStrategy(this)">
+                                        <i class="fas fa-key mr-1"></i>Keyword
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Quick suggestion chips -->
+                            <div class="flex flex-wrap gap-2 mb-4" id="searchSuggestions">
+                                <span class="text-xs text-gray-400 mr-1 self-center">Try:</span>
+                                ${generateSearchSuggestions()}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results Area -->
+                    <div id="ragSearchResults"></div>
+
+                    <!-- Index Stats -->
+                    <div id="ragIndexStats" class="mt-6"></div>
+                </div>
+            `;
+        }
+
+        function generateSearchSuggestions() {
+            const tables = analysisResults?.tables || [];
+            const tableNames = tables.map(t => t.name || '').filter(Boolean);
+            
+            const suggestions = [
+                'How many tables are in this database?',
+                'What are the primary keys?',
+                'Show me data quality issues',
+                'Which columns have null values?',
+                'What relationships exist?',
+            ];
+            
+            if (tableNames.length > 0) {
+                suggestions.push('Tell me about the ' + tableNames[0] + ' table');
+            }
+            if (tableNames.length > 1) {
+                suggestions.push('How are ' + tableNames[0] + ' and ' + tableNames[1] + ' related?');
+            }
+            
+            return suggestions.map((s, idx) => {
+                const safe = s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                return '<button data-suggestion-idx="' + idx + '" class="suggestion-chip px-3 py-1.5 text-xs bg-gray-100 hover:bg-brand/10 hover:text-brand text-gray-600 rounded-full transition-all cursor-pointer border border-gray-200 hover:border-brand/30">' + safe + '</button>';
+            }).join('');
+        }
+
+        let currentSearchStrategy = 'hybrid';
+
+        function selectSearchStrategy(btn) {
+            document.querySelectorAll('.search-strategy-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentSearchStrategy = btn.dataset.strategy;
+        }
+
+        function fillAndSearch(query) {
+            const input = document.getElementById('ragSearchInput');
+            if (input) {
+                input.value = query;
+                executeRAGSearch();
+            }
+        }
+
+        async function executeRAGSearch() {
+            const input = document.getElementById('ragSearchInput');
+            const resultsDiv = document.getElementById('ragSearchResults');
+            if (!input || !resultsDiv) return;
+            
+            const query = input.value.trim();
+            if (!query) return;
+            
+            const datasetId = getDatasetId();
+            
+            // Show loading state
+            resultsDiv.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+                    <div class="inline-flex items-center gap-3 text-gray-500">
+                        <svg class="animate-spin h-5 w-5 text-brand" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Searching through vectorized chunks...</span>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        dataset_id: datasetId,
+                        strategy: currentSearchStrategy,
+                        top_k: 10
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || data.error) {
+                    resultsDiv.innerHTML = `
+                        <div class="bg-red-50 rounded-xl border border-red-200 p-6 text-red-700">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>${data.error || 'Search failed'}
+                        </div>
+                    `;
+                    return;
+                }
+                
+                renderSearchResults(data, resultsDiv);
+                
+            } catch (err) {
+                resultsDiv.innerHTML = `
+                    <div class="bg-red-50 rounded-xl border border-red-200 p-6 text-red-700">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Error: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderSearchResults(data, container) {
+            const confidencePct = Math.round((data.confidence || 0) * 100);
+            const confidenceColor = confidencePct >= 70 ? 'text-green-600 bg-green-50 border-green-200' :
+                                    confidencePct >= 40 ? 'text-yellow-600 bg-yellow-50 border-yellow-200' :
+                                    'text-red-600 bg-red-50 border-red-200';
+            
+            const chunkTypeIcons = {
+                'db_overview': 'fa-database',
+                'table_overview': 'fa-table',
+                'column_detail': 'fa-columns',
+                'relationship': 'fa-project-diagram',
+                'quality': 'fa-shield-alt',
+                'query': 'fa-code',
+                'stat': 'fa-chart-bar',
+                'cross_table': 'fa-exchange-alt'
+            };
+            
+            const chunkTypeColors = {
+                'db_overview': 'bg-purple-50 text-purple-700 border-purple-200',
+                'table_overview': 'bg-blue-50 text-blue-700 border-blue-200',
+                'column_detail': 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                'relationship': 'bg-green-50 text-green-700 border-green-200',
+                'quality': 'bg-orange-50 text-orange-700 border-orange-200',
+                'query': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                'stat': 'bg-pink-50 text-pink-700 border-pink-200',
+                'cross_table': 'bg-teal-50 text-teal-700 border-teal-200'
+            };
+            
+            let html = `
+                <!-- Answer Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                    <div class="p-6 border-b border-gray-100 flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-robot text-brand"></i>
+                                <span class="text-sm font-semibold text-gray-900">AI Answer</span>
+                                <span class="ml-2 px-2.5 py-0.5 text-xs rounded-full border ${confidenceColor} font-medium">
+                                    ${confidencePct}% confidence
+                                </span>
+                            </div>
+                            <div class="text-gray-700 leading-relaxed prose prose-sm max-w-none" id="ragAnswerContent">
+                                ${formatAnswerContent(data.answer || '')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-3 bg-gray-50 flex items-center gap-4 text-xs text-gray-500">
+                        <span><i class="fas fa-clock mr-1"></i>${data.processing_time_ms?.toFixed(1) || 0}ms</span>
+                        <span><i class="fas fa-layer-group mr-1"></i>${data.total_chunks_searched || 0} chunks searched</span>
+                        <span><i class="fas fa-bullseye mr-1"></i>${data.chunks?.length || 0} relevant results</span>
+                        <span><i class="fas fa-cog mr-1"></i>${data.strategy || 'hybrid'} strategy</span>
+                    </div>
+                </div>
+                
+                <!-- Retrieved Chunks -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h4 class="font-semibold text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-puzzle-piece text-brand"></i>
+                            Retrieved Chunks
+                            <span class="text-xs font-normal text-gray-500">(${data.chunks?.length || 0} results)</span>
+                        </h4>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+            `;
+            
+            (data.chunks || []).forEach((chunk, i) => {
+                const icon = chunkTypeIcons[chunk.type] || 'fa-file-alt';
+                const colorClass = chunkTypeColors[chunk.type] || 'bg-gray-50 text-gray-700 border-gray-200';
+                const scoreWidth = Math.round(chunk.score * 100);
+                
+                html += `
+                    <div class="p-5 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand text-sm font-bold">
+                                ${chunk.rank || (i + 1)}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border ${colorClass} font-medium">
+                                        <i class="fas ${icon} text-[10px]"></i>
+                                        ${chunk.type?.replace('_', ' ') || 'unknown'}
+                                    </span>
+                                    ${chunk.source_table ? '<span class="text-xs text-gray-400"><i class="fas fa-table mr-1"></i>' + chunk.source_table + '</span>' : ''}
+                                    ${chunk.source_column ? '<span class="text-xs text-gray-400"><i class="fas fa-columns mr-1"></i>' + chunk.source_column + '</span>' : ''}
+                                    <span class="text-xs text-gray-400 ml-auto">${chunk.match_type}</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">${chunk.content}</p>
+                                <div class="mt-2 flex items-center gap-3">
+                                    <div class="flex-1 bg-gray-100 rounded-full h-1.5 max-w-[200px]">
+                                        <div class="bg-brand rounded-full h-1.5 transition-all" style="width: ${Math.min(scoreWidth, 100)}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Score: ${chunk.score?.toFixed(4)}</span>
+                                </div>
+                                ${chunk.keywords?.length ? '<div class="mt-2 flex flex-wrap gap-1">' + chunk.keywords.slice(0, 6).map(k => '<span class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">' + k + '</span>').join('') + '</div>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function formatAnswerContent(text) {
+            // Convert markdown-like formatting to HTML
+            let html = text
+                .replace(/```sql\n([\s\S]*?)```/g, '<pre class="mt-2 p-3 bg-gray-900 text-gray-100 rounded-lg text-xs overflow-x-auto"><code>$1</code></pre>')
+                .replace(/```([\s\S]*?)```/g, '<pre class="mt-2 p-3 bg-gray-100 rounded-lg text-xs overflow-x-auto"><code>$1</code></pre>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p class="mt-2">');
+            
+            // Convert bullet lists properly with <ul> wrapper
+            if (html.includes('\n- ')) {
+                html = html.replace(/((?:\n- [^\n]+)+)/g, function(match) {
+                    const items = match.trim().split('\n- ').filter(Boolean)
+                        .map(item => '<li class="ml-4">' + item + '</li>').join('');
+                    return '<ul class="list-disc ml-4 mt-1">' + items + '</ul>';
+                });
+            }
+            return html;
+        }
+
         function generateQueriesTab() {
             const queries = analysisResults?.sample_queries || [];
 
@@ -1848,6 +2284,301 @@
                                         </div>
                                     </div>
                                 `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================================================================
+        // SQL Lab Tab — Natural Language → SQL + Live SQL Playground
+        // ================================================================
+        function generateSQLLabTab() {
+            const tables = analysisResults?.tables || [];
+            const tableOptions = tables.map(t => `<option value="${t.name}">${t.name} (${formatNumber(t.row_count)} rows)</option>`).join('');
+            
+            // Generate context-aware suggestions based on actual dataset columns
+            const nlSuggestions = (function() {
+                const suggestions = ['How many rows in each table?', 'Show top 10 records'];
+                const allCols = tables.flatMap(t => (t.columns || []).map(c => ({...c, table: t.name})));
+                const numericCols = allCols.filter(c => ['INTEGER','REAL','NUMERIC','FLOAT','DECIMAL'].includes((c.data_type||'').toUpperCase()) && !c.is_primary_key && !c.is_foreign_key);
+                const catCols = allCols.filter(c => ['TEXT'].includes((c.data_type||'').toUpperCase()) && (c.unique_count||999) < 50);
+                const dateCols = allCols.filter(c => /date|_at$|timestamp|year/i.test(c.name));
+                
+                if (numericCols.length > 0) {
+                    const nc = numericCols[0];
+                    suggestions.push('What is the average ' + nc.name.replace(/_/g,' ') + '?');
+                    if (catCols.length > 0) {
+                        suggestions.push('Total ' + nc.name.replace(/_/g,' ') + ' by ' + catCols[0].name.replace(/_/g,' '));
+                    }
+                    suggestions.push('Find the highest ' + nc.name.replace(/_/g,' '));
+                } else {
+                    suggestions.push('Count records by category');
+                }
+                
+                if (catCols.length > 0) {
+                    suggestions.push('Count records by ' + catCols[0].name.replace(/_/g,' '));
+                }
+                if (dateCols.length > 0) {
+                    suggestions.push('Show trends over time');
+                }
+                suggestions.push('List all records');
+                return suggestions.slice(0, 8);
+            })();
+
+            return `
+                <div class="space-y-6 animate-fade-in">
+                    <!-- NL to SQL Section -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                                    <i class="fas fa-magic"></i>
+                                </span>
+                                Ask in English → Get SQL
+                                <span class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 text-indigo-700 font-semibold">AI Powered</span>
+                            </h3>
+                            <p class="text-gray-500 mt-2 text-sm">Type any question about your data in plain English — no SQL knowledge needed</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-3 mb-4">
+                                <div class="flex-1 relative">
+                                    <input type="text" id="nlQueryInput" 
+                                        placeholder="e.g. How many orders per month?" 
+                                        class="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-gray-800"
+                                        onkeydown="if(event.key==='Enter') executeNL2SQL()">
+                                    <i class="fas fa-comment-dots absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <button onclick="executeNL2SQL()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
+                                    <i class="fas fa-bolt"></i> Ask
+                                </button>
+                            </div>
+                            
+                            <!-- Suggestion chips -->
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                ${nlSuggestions.map(s => `
+                                    <button onclick="fillNLQuery('${s.replace(/'/g, "\\'")}')" class="px-3 py-1.5 text-xs rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors cursor-pointer border border-indigo-100">
+                                        ${s}
+                                    </button>
+                                `).join('')}
+                            </div>
+
+                            <!-- NL2SQL Results -->
+                            <div id="nl2sqlResults" class="hidden">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="text-sm font-semibold text-gray-600">Generated SQL</span>
+                                    <span id="nl2sqlConfidence" class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700"></span>
+                                    <span id="nl2sqlIntent" class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700"></span>
+                                </div>
+                                <div id="nl2sqlExplanation" class="text-sm text-gray-500 mb-3"></div>
+                                <div class="code-block rounded-xl p-4 relative mb-4">
+                                    <button onclick="copyNL2SQL()" class="absolute top-3 right-12 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-gray-300 transition-colors">
+                                        <i class="fas fa-copy mr-1"></i>Copy
+                                    </button>
+                                    <button onclick="editNL2SQL()" class="absolute top-3 right-3 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs text-gray-300 transition-colors" title="Edit in SQL editor">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <code id="nl2sqlCode" class="text-sm text-gray-300 font-mono whitespace-pre-wrap"></code>
+                                </div>
+                                <div id="nl2sqlWarnings" class="hidden mb-3"></div>
+                            </div>
+
+                            <!-- Query Results Table -->
+                            <div id="nl2sqlResultsTable" class="hidden">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                                        <i class="fas fa-table text-green-500"></i>
+                                        Results 
+                                        <span id="nl2sqlRowCount" class="text-xs text-gray-400"></span>
+                                    </span>
+                                    <span id="nl2sqlExecTime" class="text-xs text-gray-400"></span>
+                                </div>
+                                <div class="overflow-x-auto rounded-xl border border-gray-200 max-h-96 overflow-y-auto">
+                                    <table id="nl2sqlDataTable" class="w-full text-sm">
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Raw SQL Playground -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
+                                    <i class="fas fa-terminal"></i>
+                                </span>
+                                SQL Playground
+                                <span class="px-3 py-1 text-xs rounded-full bg-emerald-50 text-emerald-700 font-semibold">Live</span>
+                            </h3>
+                            <p class="text-gray-500 mt-2 text-sm">Write and execute SQL queries directly on your data — read-only for safety</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <textarea id="sqlEditor" 
+                                    rows="5" 
+                                    placeholder="SELECT * FROM your_table LIMIT 10;"
+                                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all text-gray-800 font-mono text-sm resize-y"
+                                    spellcheck="false"></textarea>
+                            </div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <button onclick="executeRawSQL()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2">
+                                    <i class="fas fa-play"></i> Execute
+                                </button>
+                                <button onclick="clearSQLEditor()" class="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                    <i class="fas fa-eraser"></i> Clear
+                                </button>
+                                <div class="ml-auto flex items-center gap-2 text-xs text-gray-400">
+                                    <i class="fas fa-shield-alt"></i> Read-only mode (SELECT only)
+                                </div>
+                            </div>
+                            
+                            <!-- SQL Results -->
+                            <div id="sqlPlaygroundResults" class="hidden">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                                        <i class="fas fa-table text-emerald-500"></i>
+                                        Results
+                                        <span id="sqlRowCount" class="text-xs text-gray-400"></span>
+                                    </span>
+                                    <span id="sqlExecTime" class="text-xs text-gray-400"></span>
+                                </div>
+                                <div class="overflow-x-auto rounded-xl border border-gray-200 max-h-96 overflow-y-auto">
+                                    <table id="sqlDataTable" class="w-full text-sm">
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="sqlPlaygroundError" class="hidden">
+                                <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <span id="sqlErrorText"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================================================================
+        // Interactive ER Diagram Tab
+        // ================================================================
+        function generateERDiagramTab() {
+            return `
+                <div class="space-y-6 animate-fade-in">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
+                                    <i class="fas fa-sitemap"></i>
+                                </span>
+                                Interactive ER Diagram
+                                <span class="px-3 py-1 text-xs rounded-full bg-cyan-50 text-cyan-700 font-semibold">Visual</span>
+                            </h3>
+                            <p class="text-gray-500 mt-2 text-sm">Visual entity-relationship diagram — hover for details, click tables for more info</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-3 mb-4">
+                                <button onclick="zoomERDiagram(1.2)" class="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm"><i class="fas fa-search-plus"></i></button>
+                                <button onclick="zoomERDiagram(0.8)" class="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm"><i class="fas fa-search-minus"></i></button>
+                                <button onclick="resetERDiagram()" class="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm"><i class="fas fa-undo"></i> Reset</button>
+                            </div>
+                            <div id="erDiagramContainer" class="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden" style="min-height: 500px; position: relative;">
+                                <div class="flex items-center justify-center h-full py-20">
+                                    <div class="text-center">
+                                        <div class="w-10 h-10 rounded-full spinner-ring mx-auto mb-3"></div>
+                                        <p class="text-gray-500 text-sm">Loading ER Diagram...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Detail Panel (hidden initially) -->
+                    <div id="erTableDetail" class="hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h3 id="erDetailTitle" class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                    <i class="fas fa-table text-brand"></i>
+                                    Table Details
+                                </h3>
+                            </div>
+                            <div id="erDetailContent" class="p-6"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================================================================
+        // Data Preview Tab
+        // ================================================================
+        function generateDataPreviewTab() {
+            const tables = analysisResults?.tables || [];
+            
+            return `
+                <div class="space-y-6 animate-fade-in">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                                Data Preview
+                                <span class="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 font-semibold">Live Data</span>
+                            </h3>
+                            <p class="text-gray-500 mt-2 text-sm">Browse actual data from your tables — click any table to load its rows</p>
+                        </div>
+                        <div class="p-6">
+                            <!-- Table selector cards -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+                                ${tables.map((t, i) => `
+                                    <button onclick="loadTablePreview('${t.name.replace(/'/g, "\\'")}')" 
+                                        class="preview-table-btn p-4 rounded-xl border-2 border-gray-200 hover:border-amber-400 hover:bg-amber-50 transition-all text-left group"
+                                        data-table="${t.name}">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i class="fas fa-table text-amber-500 group-hover:text-amber-600"></i>
+                                            <span class="font-semibold text-gray-900 text-sm truncate">${t.name}</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-xs text-gray-400">
+                                            <span>${formatNumber(t.row_count)} rows</span>
+                                            <span>${(t.columns || []).length} cols</span>
+                                        </div>
+                                        <span class="inline-block mt-2 px-2 py-0.5 text-xs rounded ${
+                                            t.table_type === 'fact' ? 'bg-indigo-100 text-indigo-600' :
+                                            t.table_type === 'dimension' ? 'bg-green-100 text-green-600' :
+                                            'bg-gray-100 text-gray-600'
+                                        }">${t.table_type || 'table'}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+
+                            <!-- Data Table -->
+                            <div id="dataPreviewContent" class="hidden">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 id="previewTableName" class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        <i class="fas fa-table text-amber-500"></i>
+                                        <span></span>
+                                    </h4>
+                                    <div class="flex items-center gap-2">
+                                        <span id="previewRowInfo" class="text-xs text-gray-400"></span>
+                                        <select id="previewLimitSelect" onchange="reloadPreview()" class="px-2 py-1 text-xs rounded-lg border border-gray-200 text-gray-600">
+                                            <option value="25">25 rows</option>
+                                            <option value="50" selected>50 rows</option>
+                                            <option value="100">100 rows</option>
+                                            <option value="200">200 rows</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto rounded-xl border border-gray-200 max-h-[500px] overflow-y-auto">
+                                    <table id="previewDataTable" class="w-full text-sm">
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="dataPreviewLoading" class="hidden text-center py-12">
+                                <div class="w-10 h-10 rounded-full spinner-ring mx-auto mb-3"></div>
+                                <p class="text-gray-500 text-sm">Loading data...</p>
                             </div>
                         </div>
                     </div>
@@ -1981,7 +2712,8 @@
         }
 
         function formatNumber(num) {
-            return num.toLocaleString();
+            if (num == null || isNaN(num)) return '0';
+            return Number(num).toLocaleString();
         }
 
         function highlightSQL(sql) {
@@ -2004,8 +2736,534 @@
             return div.innerHTML;
         }
 
+        // ================================================================
+        // SQL Lab Functions
+        // ================================================================
+        
+        let lastNL2SQL = '';   // Last generated SQL from NL
+        let currentPreviewTable = '';  // Current table in data preview
+        let erZoomLevel = 1;   // ER diagram zoom
+
+        function fillNLQuery(text) {
+            const input = document.getElementById('nlQueryInput');
+            if (input) { input.value = text; executeNL2SQL(); }
+        }
+
+        async function executeNL2SQL() {
+            const input = document.getElementById('nlQueryInput');
+            if (!input || !input.value.trim()) return;
+            
+            const datasetId = analysisResults?.dataset_id;
+            if (!datasetId) { showStatus('No dataset loaded', 'error'); return; }
+            
+            const question = input.value.trim();
+            
+            // Show loading
+            const resultsDiv = document.getElementById('nl2sqlResults');
+            const tableDiv = document.getElementById('nl2sqlResultsTable');
+            if (resultsDiv) resultsDiv.classList.remove('hidden');
+            if (tableDiv) tableDiv.classList.add('hidden');
+            
+            const codeEl = document.getElementById('nl2sqlCode');
+            if (codeEl) codeEl.innerHTML = '<span class="text-gray-500">Translating...</span>';
+            
+            try {
+                const response = await fetch(`/api/datasets/${datasetId}/nl2sql`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, execute: true })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    if (codeEl) codeEl.innerHTML = `<span class="text-red-400">Error: ${escapeHtml(data.error || 'Unknown error')}</span>`;
+                    return;
+                }
+                
+                lastNL2SQL = data.sql;
+                
+                // Show SQL
+                if (codeEl) codeEl.innerHTML = highlightSQL(data.sql);
+                
+                // Confidence badge
+                const confEl = document.getElementById('nl2sqlConfidence');
+                if (confEl) {
+                    const conf = Math.round(data.confidence * 100);
+                    confEl.textContent = `${conf}% confidence`;
+                    confEl.className = `px-2 py-0.5 text-xs rounded-full ${
+                        conf >= 70 ? 'bg-green-100 text-green-700' :
+                        conf >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                    }`;
+                }
+                
+                // Intent
+                const intentEl = document.getElementById('nl2sqlIntent');
+                if (intentEl) {
+                    intentEl.textContent = data.intent;
+                }
+                
+                // Explanation
+                const explEl = document.getElementById('nl2sqlExplanation');
+                if (explEl) explEl.innerHTML = data.explanation || '';
+                
+                // Warnings
+                const warnEl = document.getElementById('nl2sqlWarnings');
+                if (warnEl && data.warnings && data.warnings.length > 0) {
+                    warnEl.classList.remove('hidden');
+                    warnEl.innerHTML = data.warnings.map(w => `
+                        <div class="text-xs text-amber-600 flex items-center gap-1 mb-1">
+                            <i class="fas fa-exclamation-triangle"></i> ${escapeHtml(w)}
+                        </div>
+                    `).join('');
+                } else if (warnEl) {
+                    warnEl.classList.add('hidden');
+                }
+                
+                // Show results if available
+                if (data.results && data.results.success) {
+                    renderResultsTable(
+                        'nl2sqlDataTable', 'nl2sqlResultsTable',
+                        'nl2sqlRowCount', 'nl2sqlExecTime',
+                        data.results
+                    );
+                } else if (data.results && data.results.error) {
+                    if (tableDiv) {
+                        tableDiv.classList.remove('hidden');
+                        document.getElementById('nl2sqlDataTable').innerHTML = `
+                            <tr><td class="p-4 text-red-600 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>${escapeHtml(data.results.error)}</td></tr>
+                        `;
+                    }
+                }
+                
+            } catch (error) {
+                if (codeEl) codeEl.innerHTML = `<span class="text-red-400">Error: ${escapeHtml(error.message)}</span>`;
+            }
+        }
+
+        function copyNL2SQL() {
+            if (lastNL2SQL) {
+                navigator.clipboard.writeText(lastNL2SQL);
+                showStatus('SQL copied to clipboard!', 'success');
+            }
+        }
+
+        function editNL2SQL() {
+            const editor = document.getElementById('sqlEditor');
+            if (editor && lastNL2SQL) {
+                editor.value = lastNL2SQL;
+                editor.scrollIntoView({ behavior: 'smooth' });
+                editor.focus();
+            }
+        }
+
+        async function executeRawSQL() {
+            const editor = document.getElementById('sqlEditor');
+            if (!editor || !editor.value.trim()) return;
+            
+            const datasetId = analysisResults?.dataset_id;
+            if (!datasetId) { showStatus('No dataset loaded', 'error'); return; }
+            
+            const sql = editor.value.trim();
+            const resultsDiv = document.getElementById('sqlPlaygroundResults');
+            const errorDiv = document.getElementById('sqlPlaygroundError');
+            
+            if (resultsDiv) resultsDiv.classList.add('hidden');
+            if (errorDiv) errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`/api/datasets/${datasetId}/execute-sql`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sql })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderResultsTable(
+                        'sqlDataTable', 'sqlPlaygroundResults',
+                        'sqlRowCount', 'sqlExecTime',
+                        data
+                    );
+                } else {
+                    if (errorDiv) {
+                        errorDiv.classList.remove('hidden');
+                        document.getElementById('sqlErrorText').textContent = data.error || 'Query failed';
+                    }
+                }
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.classList.remove('hidden');
+                    document.getElementById('sqlErrorText').textContent = error.message;
+                }
+            }
+        }
+
+        function clearSQLEditor() {
+            const editor = document.getElementById('sqlEditor');
+            if (editor) { editor.value = ''; }
+            const resultsDiv = document.getElementById('sqlPlaygroundResults');
+            const errorDiv = document.getElementById('sqlPlaygroundError');
+            if (resultsDiv) resultsDiv.classList.add('hidden');
+            if (errorDiv) errorDiv.classList.add('hidden');
+        }
+
+        function renderResultsTable(tableId, containerDiv, rowCountId, execTimeId, data) {
+            const container = document.getElementById(containerDiv);
+            const table = document.getElementById(tableId);
+            const rowCountEl = document.getElementById(rowCountId);
+            const execTimeEl = document.getElementById(execTimeId);
+            
+            if (!container || !table) return;
+            
+            container.classList.remove('hidden');
+            
+            if (rowCountEl) rowCountEl.textContent = `(${data.row_count} rows)`;
+            if (execTimeEl) execTimeEl.textContent = `${data.execution_time_ms}ms`;
+            
+            // Build table HTML
+            let html = '<thead><tr class="bg-gray-50 sticky top-0">';
+            (data.columns || []).forEach(col => {
+                html += `<th class="text-left py-2 px-3 text-xs uppercase tracking-wider text-gray-500 font-semibold border-b border-gray-200 whitespace-nowrap">${escapeHtml(col)}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            (data.rows || []).forEach((row, i) => {
+                html += `<tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50 transition-colors">`;
+                row.forEach(val => {
+                    const display = val === null ? '<span class="text-gray-300 italic">NULL</span>' : escapeHtml(String(val));
+                    html += `<td class="py-2 px-3 text-gray-700 border-b border-gray-100 whitespace-nowrap max-w-xs truncate">${display}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            
+            table.innerHTML = html;
+        }
+
+        // ================================================================
+        // ER Diagram Functions
+        // ================================================================
+
+        function zoomERDiagram(factor) {
+            erZoomLevel = Math.max(0.3, Math.min(3, erZoomLevel * factor));
+            const svg = document.querySelector('#erDiagramContainer svg');
+            if (svg) {
+                svg.style.transform = `scale(${erZoomLevel})`;
+                svg.style.transformOrigin = 'top left';
+            }
+            // Also handle canvas approach
+            const canvas = document.querySelector('#erDiagramContainer canvas, #erDiagramContainer .er-canvas');
+            if (canvas) canvas.style.transform = `scale(${erZoomLevel})`;
+        }
+
+        function resetERDiagram() {
+            erZoomLevel = 1;
+            const svg = document.querySelector('#erDiagramContainer svg');
+            if (svg) svg.style.transform = 'scale(1)';
+            renderInteractiveER();
+        }
+
+        function renderInteractiveER() {
+            const container = document.getElementById('erDiagramContainer');
+            if (!container || !analysisResults) return;
+            
+            const tables = analysisResults.tables || [];
+            const relationships = analysisResults.relationships || [];
+            
+            if (tables.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-20">No tables found in this dataset.</p>';
+                return;
+            }
+            
+            // Build an interactive HTML/SVG ER diagram
+            const width = container.clientWidth || 900;
+            const cols = Math.min(tables.length, Math.max(2, Math.floor(width / 280)));
+            const cardW = 240;
+            const cardH_base = 60;
+            const colGap = 40;
+            const rowGap = 60;
+            
+            // Layout positions
+            const positions = {};
+            tables.forEach((t, i) => {
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                const cardH = cardH_base + Math.min(t.columns.length, 8) * 22;
+                positions[t.name] = {
+                    x: 40 + col * (cardW + colGap),
+                    y: 40 + row * (Math.max(...tables.map(t2 => cardH_base + Math.min(t2.columns.length, 8) * 22)) + rowGap),
+                    w: cardW,
+                    h: cardH
+                };
+            });
+            
+            const maxY = Math.max(...Object.values(positions).map(p => p.y + p.h)) + 60;
+            const maxX = Math.max(...Object.values(positions).map(p => p.x + p.w)) + 60;
+            
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${maxX}" height="${maxY}" style="font-family: Inter, system-ui, sans-serif; transform: scale(${erZoomLevel}); transform-origin: top left;">`;
+            
+            // Defs for arrow markers
+            svg += `<defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1" />
+                </marker>
+                <marker id="arrowhead-inferred" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" />
+                </marker>
+                <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000015"/>
+                </filter>
+            </defs>`;
+            
+            // Draw relationship lines FIRST (behind cards)
+            relationships.forEach(rel => {
+                const from = positions[rel.from_table];
+                const to = positions[rel.to_table];
+                if (!from || !to) return;
+                
+                const x1 = from.x + from.w / 2;
+                const y1 = from.y + from.h / 2;
+                const x2 = to.x + to.w / 2;
+                const y2 = to.y + to.h / 2;
+                
+                const isExplicit = rel.is_explicit;
+                const color = isExplicit ? '#6366f1' : '#f59e0b';
+                const dash = isExplicit ? '' : 'stroke-dasharray="6,4"';
+                const marker = isExplicit ? 'arrowhead' : 'arrowhead-inferred';
+                
+                // Bezier curve
+                const mx = (x1 + x2) / 2;
+                const my = (y1 + y2) / 2;
+                const ctrl1x = x1 + (mx - x1) * 0.5;
+                const ctrl1y = y1;
+                const ctrl2x = x2 - (x2 - mx) * 0.5;
+                const ctrl2y = y2;
+                
+                svg += `<path d="M${x1},${y1} C${ctrl1x},${ctrl1y} ${ctrl2x},${ctrl2y} ${x2},${y2}" 
+                    fill="none" stroke="${color}" stroke-width="2" ${dash} 
+                    marker-end="url(#${marker})" opacity="0.6"/>`;
+                
+                // Label
+                svg += `<text x="${mx}" y="${my - 8}" text-anchor="middle" fill="${color}" font-size="10" font-weight="600">
+                    ${rel.from_column} → ${rel.to_column}
+                </text>`;
+                svg += `<text x="${mx}" y="${my + 6}" text-anchor="middle" fill="${color}" font-size="9" opacity="0.7">
+                    ${rel.relationship_type}
+                </text>`;
+            });
+            
+            // Draw table cards
+            tables.forEach(t => {
+                const pos = positions[t.name];
+                const cols = t.columns.slice(0, 8);
+                
+                // Type colors
+                const typeColors = {
+                    fact: { bg: '#EEF2FF', border: '#6366f1', header: '#4F46E5', badge: '#6366f1' },
+                    dimension: { bg: '#F0FDF4', border: '#22c55e', header: '#16a34a', badge: '#22c55e' },
+                    bridge: { bg: '#FFF7ED', border: '#f59e0b', header: '#d97706', badge: '#f59e0b' },
+                    lookup: { bg: '#FDF2F8', border: '#ec4899', header: '#db2777', badge: '#ec4899' },
+                };
+                const c = typeColors[t.table_type] || { bg: '#F8FAFC', border: '#94a3b8', header: '#475569', badge: '#94a3b8' };
+                
+                svg += `<g class="er-table-group" style="cursor: pointer;" onclick="showERTableDetail('${t.name.replace(/'/g, "\\'")}')">`;
+                
+                // Card background
+                svg += `<rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}" 
+                    rx="12" fill="white" stroke="${c.border}" stroke-width="2" filter="url(#shadow)"/>`;
+                
+                // Header
+                svg += `<rect x="${pos.x}" y="${pos.y}" width="${pos.w}" height="36" 
+                    rx="12" fill="${c.header}"/>`;
+                svg += `<rect x="${pos.x}" y="${pos.y + 24}" width="${pos.w}" height="12" fill="${c.header}"/>`;
+                
+                // Table name
+                svg += `<text x="${pos.x + 12}" y="${pos.y + 23}" fill="white" font-size="13" font-weight="700">
+                    📋 ${t.name.length > 22 ? t.name.substring(0, 20) + '..' : t.name}
+                </text>`;
+                
+                // Row count badge
+                svg += `<text x="${pos.x + pos.w - 12}" y="${pos.y + 23}" text-anchor="end" fill="rgba(255,255,255,0.8)" font-size="10">
+                    ${formatNumber(t.row_count)} rows
+                </text>`;
+                
+                // Columns
+                cols.forEach((col, i) => {
+                    const cy = pos.y + 48 + i * 22;
+                    const icon = col.is_primary_key ? '🔑' : col.is_foreign_key ? '🔗' : '  ';
+                    const textColor = col.is_primary_key ? '#d97706' : col.is_foreign_key ? '#7c3aed' : '#374151';
+                    
+                    svg += `<text x="${pos.x + 12}" y="${cy}" fill="${textColor}" font-size="11">
+                        ${icon} ${col.name.length > 18 ? col.name.substring(0, 16) + '..' : col.name}
+                    </text>`;
+                    svg += `<text x="${pos.x + pos.w - 12}" y="${cy}" text-anchor="end" fill="#9ca3af" font-size="10">
+                        ${col.data_type}
+                    </text>`;
+                });
+                
+                // More indicator
+                if (t.columns.length > 8) {
+                    const cy = pos.y + 48 + 8 * 22;
+                    svg += `<text x="${pos.x + pos.w/2}" y="${cy}" text-anchor="middle" fill="#9ca3af" font-size="10" font-style="italic">
+                        +${t.columns.length - 8} more columns...
+                    </text>`;
+                }
+                
+                svg += '</g>';
+            });
+            
+            svg += '</svg>';
+            
+            container.innerHTML = svg;
+        }
+
+        function showERTableDetail(tableName) {
+            const table = (analysisResults?.tables || []).find(t => t.name === tableName);
+            if (!table) return;
+            
+            const detailDiv = document.getElementById('erTableDetail');
+            const titleEl = document.getElementById('erDetailTitle');
+            const contentEl = document.getElementById('erDetailContent');
+            
+            if (!detailDiv || !contentEl) return;
+            
+            detailDiv.classList.remove('hidden');
+            titleEl.innerHTML = `<i class="fas fa-table text-brand"></i> ${table.name} <span class="text-sm font-normal text-gray-400">(${table.table_type})</span>`;
+            
+            const rels = (analysisResults?.relationships || []).filter(r => r.from_table === table.name || r.to_table === table.name);
+            
+            contentEl.innerHTML = `
+                <p class="text-gray-600 mb-4">${table.business_description || ''}</p>
+                <div class="flex gap-4 text-sm mb-6">
+                    <span class="px-3 py-1 rounded-lg bg-brand/10 text-brand"><i class="fas fa-database mr-1"></i>${formatNumber(table.row_count)} rows</span>
+                    <span class="px-3 py-1 rounded-lg bg-purple-100 text-purple-700"><i class="fas fa-columns mr-1"></i>${table.columns.length} columns</span>
+                    <span class="px-3 py-1 rounded-lg bg-green-100 text-green-700"><i class="fas fa-link mr-1"></i>${rels.length} relationships</span>
+                    <button onclick="loadTablePreview('${table.name.replace(/'/g, "\\'")}')" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">
+                        <i class="fas fa-eye mr-1"></i>Preview Data
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Column</th>
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Type</th>
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Key</th>
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Nulls</th>
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Unique</th>
+                                <th class="py-2 px-3 text-left text-xs uppercase text-gray-500 font-semibold">Semantic</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${table.columns.map(col => `
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-2 px-3 font-medium">${col.name}</td>
+                                    <td class="py-2 px-3"><code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">${col.data_type}</code></td>
+                                    <td class="py-2 px-3">
+                                        ${col.is_primary_key ? '<span class="text-amber-600">🔑PK</span>' : ''}
+                                        ${col.is_foreign_key ? '<span class="text-purple-600">🔗FK</span>' : ''}
+                                    </td>
+                                    <td class="py-2 px-3 text-gray-500">${col.null_percentage || 0}%</td>
+                                    <td class="py-2 px-3 text-gray-500">${formatNumber(col.unique_count || 0)}</td>
+                                    <td class="py-2 px-3"><span class="px-2 py-0.5 text-xs rounded bg-gray-100">${col.semantic_type || ''}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            detailDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ================================================================
+        // Data Preview Functions
+        // ================================================================
+
+        async function loadTablePreview(tableName) {
+            const datasetId = analysisResults?.dataset_id;
+            if (!datasetId) { showStatus('No dataset loaded', 'error'); return; }
+            
+            currentPreviewTable = tableName;
+            
+            // Switch to data preview tab if not already there
+            const container = document.getElementById('dataPreviewContent');
+            const loading = document.getElementById('dataPreviewLoading');
+            
+            // If we're not on the datapreview tab, switch to it
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab && activeTab.dataset.tab !== 'datapreview') {
+                // Switch tab
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                const dpTab = document.querySelector('.tab-btn[data-tab="datapreview"]');
+                if (dpTab) dpTab.classList.add('active');
+                showTab('datapreview');
+            }
+            
+            // Re-get elements after tab switch
+            const contentDiv = document.getElementById('dataPreviewContent');
+            const loadingDiv = document.getElementById('dataPreviewLoading');
+            
+            if (loadingDiv) loadingDiv.classList.remove('hidden');
+            if (contentDiv) contentDiv.classList.add('hidden');
+            
+            // Highlight active table button
+            document.querySelectorAll('.preview-table-btn').forEach(btn => {
+                btn.classList.toggle('border-amber-400', btn.dataset.table === tableName);
+                btn.classList.toggle('bg-amber-50', btn.dataset.table === tableName);
+                btn.classList.toggle('border-gray-200', btn.dataset.table !== tableName);
+            });
+            
+            const limit = document.getElementById('previewLimitSelect')?.value || 50;
+            
+            try {
+                const response = await fetch(`/api/datasets/${datasetId}/preview/${encodeURIComponent(tableName)}?limit=${limit}`);
+                const data = await response.json();
+                
+                if (loadingDiv) loadingDiv.classList.add('hidden');
+                
+                if (data.success) {
+                    const contentDiv2 = document.getElementById('dataPreviewContent');
+                    if (contentDiv2) contentDiv2.classList.remove('hidden');
+                    
+                    const nameEl = document.getElementById('previewTableName');
+                    if (nameEl) nameEl.innerHTML = `<i class="fas fa-table text-amber-500"></i> ${escapeHtml(tableName)}`;
+                    
+                    const infoEl = document.getElementById('previewRowInfo');
+                    if (infoEl) infoEl.textContent = `Showing ${data.row_count} rows · ${data.execution_time_ms}ms`;
+                    
+                    renderResultsTable(
+                        'previewDataTable', 'dataPreviewContent',
+                        'previewRowInfo', null,
+                        data
+                    );
+                    
+                    if (infoEl) infoEl.textContent = `Showing ${data.row_count} rows · ${data.execution_time_ms}ms`;
+                } else {
+                    if (contentDiv) {
+                        contentDiv.classList.remove('hidden');
+                        contentDiv.innerHTML = `<div class="p-4 bg-red-50 rounded-xl text-red-600"><i class="fas fa-exclamation-triangle mr-2"></i>${escapeHtml(data.error || 'Failed to load data')}</div>`;
+                    }
+                }
+            } catch (error) {
+                if (loadingDiv) loadingDiv.classList.add('hidden');
+                showStatus('Error loading table preview: ' + error.message, 'error');
+            }
+        }
+
+        function reloadPreview() {
+            if (currentPreviewTable) loadTablePreview(currentPreviewTable);
+        }
+
         // Load markdown preview when export tab is shown
         document.addEventListener('click', async (e) => {
+            // Auto-render ER diagram when tab is shown
+            if (e.target.closest('.tab-btn[data-tab="erdiagram"]')) {
+                setTimeout(() => renderInteractiveER(), 150);
+            }
             if (e.target.closest('.tab-btn[data-tab="export"]')) {
                 setTimeout(async () => {
                     const preview = document.getElementById('markdownPreview');
@@ -2034,6 +3292,38 @@
         });
         
         console.log('All event listeners attached successfully');
+        
+        // Expose functions to global scope for onclick attributes
+        window.executeRAGSearch = executeRAGSearch;
+        window.selectSearchStrategy = selectSearchStrategy;
+        window.fillAndSearch = fillAndSearch;
+        window.refreshCharts = refreshCharts;
+        window.openChartModal = openChartModal;
+        window.useDemoDatabase = useDemoDatabase;
+        window.downloadMarkdown = downloadMarkdown;
+        window.copyMarkdown = copyMarkdown;
+        window.downloadJSON = downloadJSON;
+        // New SQL Lab & ER Diagram functions
+        window.executeNL2SQL = executeNL2SQL;
+        window.fillNLQuery = fillNLQuery;
+        window.copyNL2SQL = copyNL2SQL;
+        window.editNL2SQL = editNL2SQL;
+        window.executeRawSQL = executeRawSQL;
+        window.clearSQLEditor = clearSQLEditor;
+        window.loadTablePreview = loadTablePreview;
+        window.reloadPreview = reloadPreview;
+        window.zoomERDiagram = zoomERDiagram;
+        window.resetERDiagram = resetERDiagram;
+        window.showERTableDetail = showERTableDetail;
+        
+        // Event delegation for dynamically generated suggestion chips
+        document.addEventListener('click', function(e) {
+            const chip = e.target.closest('.suggestion-chip');
+            if (chip) {
+                fillAndSearch(chip.textContent.trim());
+            }
+        });
+        
         }); // End DOMContentLoaded
     </script>
 </body>

@@ -20,6 +20,7 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 import json
 import io
 import math
+import threading
 from collections import defaultdict
 
 try:
@@ -323,36 +324,41 @@ class ChartGenerator:
     """
     Enterprise-grade chart generator with comprehensive visualization capabilities.
     
-    Chart Types:
+    Chart Types (21 total):
     1. Table Analysis:
-       - Table Size Distribution (Bar)
-       - Table Type Distribution (Pie/Donut)
+       - Table Size Distribution (Gradient Bar)
+       - Table Type Distribution (Donut with glow)
        - Row Count Treemap
+       - Data Density Heatmap Grid
+       - Table DNA Barcode
     
     2. Column Analysis:
-       - Column Data Types (Bar)
+       - Column Data Types (Gradient Bar)
        - Null Value Distribution (Horizontal Bar)
        - Uniqueness Heatmap
+       - Column Fingerprint Bubble Scatter
     
     3. Relationship Analysis:
        - Network Relationship Graph
        - Relationship Matrix Heatmap
        - Data Flow Sankey Diagram
        - Dependency Hierarchy Tree
+       - Schema Constellation (force-directed)
+       - FK Coverage Ring
     
     4. Quality Analysis:
-       - Quality Score Gauge
+       - Quality Score Gauge (neon)
        - Quality Issues by Severity (Bar)
        - Completeness Radar Chart
        - Quality Matrix Heatmap
     
-    5. Statistical Analysis:
-       - Value Distribution Histogram
-       - Correlation Heatmap
-       - Anomaly Detection Chart
+    5. Advanced / Summary:
+       - Sunburst Hierarchy (table→column→type)
+       - Statistical Distribution Violin
+       - Schema Overview Matrix (4-panel)
     """
     
-    # Modern enterprise color palette
+    # Modern enterprise color palette — extended
     COLORS = [
         '#06B6D4',  # Cyan (Primary brand color)
         '#4F46E5',  # Indigo
@@ -368,27 +374,40 @@ class ChartGenerator:
         '#A855F7',  # Purple
     ]
     
+    # Gradient pairs for advanced charts
+    GRADIENTS = [
+        ('#06B6D4', '#0E7490'),
+        ('#4F46E5', '#3730A3'),
+        ('#10B981', '#047857'),
+        ('#F59E0B', '#D97706'),
+        ('#EF4444', '#DC2626'),
+        ('#8B5CF6', '#6D28D9'),
+    ]
+    
     # Quality color scale
     QUALITY_COLORS = {
-        'excellent': '#10B981',  # Green
-        'good': '#06B6D4',       # Cyan
-        'fair': '#F59E0B',       # Amber
-        'poor': '#EF4444',       # Red
+        'excellent': '#10B981',
+        'good': '#06B6D4',
+        'fair': '#F59E0B',
+        'poor': '#EF4444',
     }
     
-    # Style settings for consistent look
+    # Style settings for consistent premium look
     STYLE = {
-        'figure.facecolor': 'white',
-        'axes.facecolor': 'white',
+        'figure.facecolor': '#FAFBFC',
+        'axes.facecolor': '#FAFBFC',
         'axes.edgecolor': '#E5E7EB',
-        'axes.labelcolor': '#374151',
-        'text.color': '#374151',
+        'axes.labelcolor': '#1F2937',
+        'text.color': '#1F2937',
         'xtick.color': '#6B7280',
         'ytick.color': '#6B7280',
         'grid.color': '#F3F4F6',
         'font.family': 'sans-serif',
     }
     
+    # Module-level lock for matplotlib thread safety
+    _mpl_lock = threading.Lock()
+
     def __init__(self, storage_manager):
         """Initialize with storage manager."""
         self.storage = storage_manager
@@ -411,26 +430,39 @@ class ChartGenerator:
         
         generated = []
         
-        # Table Analysis Charts
         chart_methods = [
+            # --- Table Analysis ---
             ('bar_table_size', self._generate_table_size_chart),
             ('donut_table_type', self._generate_table_type_donut),
             ('treemap_tables', self._generate_table_treemap),
+            ('density_heatmap', self._generate_data_density_heatmap),
+            ('table_dna', self._generate_table_dna_barcode),
+            # --- Column Analysis ---
             ('bar_column_types', self._generate_column_type_chart),
             ('heatmap_null', self._generate_null_heatmap),
+            ('bar_null_distribution', self._generate_null_distribution_chart),
+            ('column_fingerprint', self._generate_column_fingerprint),
+            # --- Quality Analysis ---
             ('gauge_quality', self._generate_quality_gauge),
             ('bar_quality_issues', self._generate_quality_issues_chart),
             ('radar_completeness', self._generate_completeness_radar),
+            # --- Relationship Analysis ---
             ('network_relationships', self._generate_network_graph),
             ('heatmap_relationships', self._generate_relationship_heatmap),
             ('hierarchy_tables', self._generate_hierarchy_chart),
-            ('bar_null_distribution', self._generate_null_distribution_chart),
+            ('sankey_dataflow', self._generate_sankey_dataflow),
+            ('constellation_schema', self._generate_schema_constellation),
+            ('fk_coverage_ring', self._generate_fk_coverage_ring),
+            # --- Advanced / Summary ---
+            ('sunburst_hierarchy', self._generate_sunburst_chart),
+            ('violin_distribution', self._generate_violin_distribution),
             ('matrix_overview', self._generate_schema_matrix),
         ]
         
         for chart_name, method in chart_methods:
             try:
-                result = method(dataset_id, results)
+                with self._mpl_lock:
+                    result = method(dataset_id, results)
                 if result:
                     generated.append(result)
             except Exception as e:
@@ -440,12 +472,14 @@ class ChartGenerator:
         return generated
     
     def _save_chart(self, dataset_id: str, chart_name: str, fig) -> Optional[str]:
-        """Save chart to storage."""
+        """Save chart to storage with high quality."""
         if not MATPLOTLIB_AVAILABLE:
             return None
         
         buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+        fig.savefig(buf, format='png', dpi=200, bbox_inches='tight',
+                    facecolor=fig.get_facecolor(), edgecolor='none',
+                    pad_inches=0.3)
         buf.seek(0)
         chart_data = buf.read()
         plt.close(fig)
@@ -454,56 +488,75 @@ class ChartGenerator:
         
         return f"{chart_name}.png"
     
+    def _add_watermark(self, fig, text='DataMind AI'):
+        """Add subtle watermark to chart."""
+        fig.text(0.99, 0.01, text, fontsize=7, color='#D1D5DB',
+                 ha='right', va='bottom', alpha=0.5, style='italic')
+    
     # ========================================================================
     # TABLE ANALYSIS CHARTS
     # ========================================================================
     
     def _generate_table_size_chart(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate horizontal bar chart of table row counts."""
+        """Generate premium gradient horizontal bar chart of table row counts."""
         tables = results.get('tables', [])
         if not tables:
             return None
         
-        # Sort by row count and take top 15
         sorted_tables = sorted(tables, key=lambda t: t.get('row_count', 0), reverse=True)[:15]
         
         names = [t.get('name', 'Unknown')[:25] for t in sorted_tables]
         counts = [t.get('row_count', 0) for t in sorted_tables]
         
-        fig, ax = plt.subplots(figsize=(12, max(6, len(names) * 0.5)))
+        fig, ax = plt.subplots(figsize=(14, max(7, len(names) * 0.6)))
+        fig.set_facecolor('#FAFBFC')
         
-        # Create gradient colors based on values
         max_count = max(counts) if counts else 1
-        colors = [self.COLORS[i % len(self.COLORS)] for i in range(len(names))]
         
-        bars = ax.barh(names, counts, color=colors, edgecolor='white', linewidth=0.5, height=0.7)
-        
-        # Add value labels
-        for bar, count in zip(bars, counts):
-            width = bar.get_width()
+        # Draw bars with gradient effect (multiple overlapping bars)
+        for i, (name, count) in enumerate(zip(names, counts)):
+            base_color = self.COLORS[i % len(self.COLORS)]
+            # Main bar
+            bar = ax.barh(i, count, color=base_color, edgecolor='white',
+                         linewidth=0.5, height=0.65, alpha=0.85, zorder=3)
+            # Highlight strip on top edge
+            ax.barh(i + 0.25, count, color=base_color, height=0.08, alpha=0.4, zorder=4)
+            # Value label
             label = f'{count:,}'
-            ax.text(width + max_count * 0.02, bar.get_y() + bar.get_height()/2,
-                   label, ha='left', va='center', fontsize=9, color='#374151', fontweight='500')
+            ax.text(count + max_count * 0.02, i,
+                   label, ha='left', va='center', fontsize=10,
+                   color='#1F2937', fontweight='600')
         
-        ax.set_xlabel('Number of Rows', fontsize=11, fontweight='500')
-        ax.set_title('Table Size Distribution', fontsize=14, fontweight='bold', pad=15)
+        ax.set_yticks(range(len(names)))
+        ax.set_yticklabels(names, fontsize=10)
+        ax.set_xlabel('Number of Rows', fontsize=12, fontweight='600', labelpad=10)
+        ax.set_title('Table Size Distribution', fontsize=16, fontweight='bold', pad=20,
+                     color='#111827')
         ax.invert_yaxis()
-        ax.grid(axis='x', alpha=0.3, linestyle='--')
+        ax.grid(axis='x', alpha=0.15, linestyle='-', color='#CBD5E1')
         ax.set_axisbelow(True)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#E5E7EB')
+        ax.spines['bottom'].set_color('#E5E7EB')
         
+        # Summary annotation
+        total = sum(counts)
+        ax.text(0.98, 0.02, f'Total: {total:,} rows across {len(names)} tables',
+               transform=ax.transAxes, ha='right', va='bottom',
+               fontsize=9, color='#9CA3AF', style='italic')
+        
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'bar_table_size_distribution', fig)
+        return self._save_chart(dataset_id, 'bar_table_size', fig)
     
     def _generate_table_type_donut(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate donut chart of table types."""
+        """Generate premium donut chart of table types with glow effect."""
         tables = results.get('tables', [])
         if not tables:
             return None
         
-        # Count table types
         type_counts = defaultdict(int)
         for table in tables:
             table_type = table.get('table_type', 'unknown')
@@ -512,80 +565,83 @@ class ChartGenerator:
         if not type_counts:
             return None
         
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(11, 11))
+        fig.set_facecolor('#FAFBFC')
         
         labels = list(type_counts.keys())
         sizes = list(type_counts.values())
         colors = self.COLORS[:len(labels)]
         
-        # Create donut chart
+        # Outer ring — subtle shadow
+        ax.pie(sizes, labels=None, colors=['#E5E7EB'] * len(sizes),
+               startangle=90, radius=1.08,
+               wedgeprops=dict(width=0.52, edgecolor='#FAFBFC', linewidth=0))
+        
+        # Main donut
         wedges, texts, autotexts = ax.pie(
-            sizes,
-            labels=None,
-            autopct='%1.1f%%',
-            colors=colors,
-            startangle=90,
-            pctdistance=0.75,
-            wedgeprops=dict(width=0.5, edgecolor='white', linewidth=2)
+            sizes, labels=None, autopct='%1.1f%%',
+            colors=colors, startangle=90, pctdistance=0.78,
+            wedgeprops=dict(width=0.48, edgecolor='white', linewidth=3),
+            radius=1.05
         )
         
-        # Style autotexts
         for autotext in autotexts:
-            autotext.set_fontsize(11)
+            autotext.set_fontsize(12)
             autotext.set_fontweight('bold')
             autotext.set_color('white')
+            autotext.set_path_effects([
+                path_effects.withStroke(linewidth=2, foreground='black', alpha=0.3)])
         
-        # Add legend
-        ax.legend(wedges, [f'{l} ({s})' for l, s in zip(labels, sizes)],
-                 loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+        # Legend with counts
+        legend_labels = [f'{l.capitalize()}  ({s})' for l, s in zip(labels, sizes)]
+        leg = ax.legend(wedges, legend_labels,
+                 loc='center left', bbox_to_anchor=(1, 0.5), fontsize=11,
+                 frameon=True, fancybox=True, shadow=True,
+                 edgecolor='#E5E7EB')
+        leg.get_frame().set_facecolor('#FFFFFF')
         
-        # Add center text
-        ax.text(0, 0, f'{sum(sizes)}\nTables', ha='center', va='center',
-               fontsize=20, fontweight='bold', color='#374151')
+        # Center text with icon
+        ax.text(0, 0.08, f'{sum(sizes)}', ha='center', va='center',
+               fontsize=42, fontweight='bold', color='#111827')
+        ax.text(0, -0.12, 'Tables', ha='center', va='center',
+               fontsize=14, color='#6B7280', fontweight='500')
         
-        ax.set_title('Table Type Distribution', fontsize=14, fontweight='bold', pad=20)
+        ax.set_title('Table Type Distribution', fontsize=16, fontweight='bold', pad=25,
+                     color='#111827')
         ax.axis('equal')
-        
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'donut_table_type_distribution', fig)
+        return self._save_chart(dataset_id, 'donut_table_type', fig)
     
     def _generate_table_treemap(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate treemap visualization of table sizes."""
+        """Generate premium treemap with gradient fills and rounded labels."""
         tables = results.get('tables', [])
         if not tables or len(tables) < 2:
             return None
         
-        # Sort by row count
         sorted_tables = sorted(tables, key=lambda t: t.get('row_count', 0), reverse=True)[:20]
         
         fig, ax = plt.subplots(figsize=(14, 10))
+        fig.set_facecolor('#FAFBFC')
         
-        # Calculate treemap areas
         total_rows = sum(t.get('row_count', 1) for t in sorted_tables)
         
-        # Simple squarified treemap algorithm
         def squarify(values, x, y, width, height):
-            """Returns rectangles for treemap."""
             if not values:
                 return []
-            
             total = sum(values)
             rects = []
-            
             if width >= height:
-                # Horizontal layout
-                for i, val in enumerate(values):
+                for val in values:
                     w = (val / total) * width if total > 0 else width / len(values)
                     rects.append((x, y, w, height))
                     x += w
             else:
-                # Vertical layout
-                for i, val in enumerate(values):
+                for val in values:
                     h = (val / total) * height if total > 0 else height / len(values)
                     rects.append((x, y, width, h))
                     y += h
-            
             return rects
         
         values = [t.get('row_count', 1) for t in sorted_tables]
@@ -595,43 +651,56 @@ class ChartGenerator:
             x, y, w, h = rect
             color = self.COLORS[i % len(self.COLORS)]
             
-            # Draw rectangle
-            ax.add_patch(plt.Rectangle((x, y), w, h, facecolor=color, 
-                                        edgecolor='white', linewidth=2))
+            # Main rect
+            ax.add_patch(plt.Rectangle((x + 0.05, y + 0.05), w - 0.1, h - 0.1,
+                                        facecolor=color, edgecolor='white',
+                                        linewidth=2.5, alpha=0.85, zorder=2))
+            # Highlight overlay on top edge
+            ax.add_patch(plt.Rectangle((x + 0.05, y + h - 0.15), w - 0.1, 0.08,
+                                        facecolor='white', alpha=0.15, zorder=3))
             
-            # Add label if space allows
+            # Labels
             if w > 0.8 and h > 0.6:
                 name = table.get('name', '')[:15]
                 count = table.get('row_count', 0)
-                ax.text(x + w/2, y + h/2, f'{name}\n{count:,}',
-                       ha='center', va='center', fontsize=8, 
-                       color='white', fontweight='bold')
+                pct = (count / total_rows * 100) if total_rows > 0 else 0
+                
+                ax.text(x + w/2, y + h/2 + 0.1, name.upper(),
+                       ha='center', va='center', fontsize=9 if w > 1.5 else 7,
+                       color='white', fontweight='bold', zorder=4,
+                       path_effects=[path_effects.withStroke(linewidth=2, foreground='black', alpha=0.3)])
+                ax.text(x + w/2, y + h/2 - 0.25, f'{count:,} rows  ({pct:.1f}%)',
+                       ha='center', va='center', fontsize=7 if w > 1.5 else 6,
+                       color='white', alpha=0.85, zorder=4)
         
         ax.set_xlim(0, 10)
         ax.set_ylim(0, 10)
         ax.axis('off')
-        ax.set_title('Table Size Treemap', fontsize=14, fontweight='bold', pad=15)
+        ax.set_title('Table Size Treemap', fontsize=16, fontweight='bold', pad=20, color='#111827')
         
+        # Summary
+        ax.text(0.5, -0.02, f'{len(sorted_tables)} tables  ·  {total_rows:,} total rows',
+               transform=ax.transAxes, ha='center', fontsize=10, color='#6B7280')
+        
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'treemap_table_sizes', fig)
+        return self._save_chart(dataset_id, 'treemap_tables', fig)
     
     # ========================================================================
     # COLUMN ANALYSIS CHARTS
     # ========================================================================
     
     def _generate_column_type_chart(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate bar chart of column data types distribution."""
+        """Generate premium column data type distribution with gradient bars."""
         tables = results.get('tables', [])
         if not tables:
             return None
         
-        # Count data types
         type_counts = defaultdict(int)
         for table in tables:
             for col in table.get('columns', []):
                 data_type = col.get('data_type', 'UNKNOWN').upper()
-                # Normalize type names
                 normalized = self._normalize_data_type(data_type)
                 type_counts[normalized] += 1
         
@@ -639,33 +708,54 @@ class ChartGenerator:
             return None
         
         fig, ax = plt.subplots(figsize=(12, 7))
+        fig.set_facecolor('#FAFBFC')
         
-        # Sort by count
         sorted_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)
         types = [t[0] for t in sorted_types]
         counts = [t[1] for t in sorted_types]
-        colors = [self.COLORS[i % len(self.COLORS)] for i in range(len(types))]
+        total = sum(counts)
         
-        bars = ax.bar(types, counts, color=colors, edgecolor='white', linewidth=0.5)
+        type_colors = {
+            'INTEGER': '#4F46E5', 'TEXT': '#06B6D4', 'NUMERIC': '#10B981',
+            'DATETIME': '#F59E0B', 'BOOLEAN': '#EC4899', 'BINARY': '#8B5CF6',
+        }
+        colors = [type_colors.get(t, self.COLORS[i % len(self.COLORS)]) for i, t in enumerate(types)]
         
-        # Add value labels on top
+        bars = ax.bar(types, counts, color=colors, edgecolor='white', linewidth=1.5,
+                     alpha=0.85, width=0.65)
+        
+        # Highlight strip on top of each bar
+        for bar in bars:
+            x = bar.get_x()
+            w = bar.get_width()
+            h = bar.get_height()
+            ax.add_patch(plt.Rectangle((x, h - h * 0.04), w, h * 0.04,
+                                      facecolor='white', alpha=0.25, zorder=3))
+        
+        # Value labels with percentage
         for bar, count in zip(bars, counts):
             height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, height + max(counts) * 0.02,
-                   str(count), ha='center', va='bottom', fontsize=10, fontweight='bold')
+            pct = count / total * 100 if total > 0 else 0
+            ax.text(bar.get_x() + bar.get_width()/2, height + max(counts) * 0.03,
+                   f'{count}  ({pct:.0f}%)', ha='center', va='bottom',
+                   fontsize=10, fontweight='bold', color='#374151')
         
-        ax.set_xlabel('Data Type', fontsize=11, fontweight='500')
-        ax.set_ylabel('Number of Columns', fontsize=11, fontweight='500')
-        ax.set_title('Column Data Type Distribution', fontsize=14, fontweight='bold', pad=15)
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
+        ax.set_xlabel('Data Type', fontsize=12, fontweight='600', color='#374151')
+        ax.set_ylabel('Number of Columns', fontsize=12, fontweight='600', color='#374151')
+        ax.set_title('Column Data Type Distribution', fontsize=16, fontweight='bold',
+                     pad=20, color='#111827')
+        ax.grid(axis='y', alpha=0.12, linestyle='-')
         ax.set_axisbelow(True)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#E5E7EB')
+        ax.spines['bottom'].set_color('#E5E7EB')
         
         plt.xticks(rotation=45, ha='right')
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'bar_column_type_distribution', fig)
+        return self._save_chart(dataset_id, 'bar_column_types', fig)
     
     def _normalize_data_type(self, dtype: str) -> str:
         """Normalize data type name for grouping."""
@@ -685,19 +775,17 @@ class ChartGenerator:
         return dtype
     
     def _generate_null_heatmap(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate heatmap of null percentages across tables and columns."""
+        """Generate premium null-percentage heatmap with gradient bars and severity zones."""
         tables = results.get('tables', [])
         if not tables:
             return None
         
-        # Collect null data
         table_names = []
         null_percentages = []
         
-        for table in tables[:15]:  # Limit to 15 tables
+        for table in tables[:15]:
             table_name = table.get('name', 'Unknown')[:20]
-            columns = table.get('columns', [])[:10]  # Limit columns
-            
+            columns = table.get('columns', [])[:10]
             if columns:
                 table_names.append(table_name)
                 avg_null = sum(c.get('null_percentage', 0) for c in columns) / len(columns)
@@ -706,45 +794,45 @@ class ChartGenerator:
         if not table_names:
             return None
         
-        fig, ax = plt.subplots(figsize=(12, max(6, len(table_names) * 0.5)))
+        fig, ax = plt.subplots(figsize=(12, max(6, len(table_names) * 0.55)))
+        fig.set_facecolor('#FAFBFC')
         
-        # Create color gradient
-        colors = []
-        for pct in null_percentages:
-            if pct > 50:
-                colors.append('#EF4444')  # Red
-            elif pct > 25:
-                colors.append('#F59E0B')  # Amber
-            elif pct > 10:
-                colors.append('#06B6D4')  # Cyan
-            else:
-                colors.append('#10B981')  # Green
+        cmap = LinearSegmentedColormap.from_list('nulls',
+            ['#10B981', '#06B6D4', '#F59E0B', '#EF4444'], N=256)
         
-        bars = ax.barh(table_names, null_percentages, color=colors, 
-                       edgecolor='white', linewidth=0.5, height=0.7)
+        max_pct = max(null_percentages) if null_percentages else 100
+        colors = [cmap(min(pct / 100, 1.0)) for pct in null_percentages]
         
-        # Add percentage labels
+        bars = ax.barh(table_names, null_percentages, color=colors,
+                       edgecolor='white', linewidth=1.5, height=0.65, alpha=0.85)
+        
         for bar, pct in zip(bars, null_percentages):
-            width = bar.get_width()
-            ax.text(width + 2, bar.get_y() + bar.get_height()/2,
-                   f'{pct:.1f}%', ha='left', va='center', fontsize=9, fontweight='500')
+            w = bar.get_width()
+            icon = '✔' if pct < 10 else ('⚠' if pct < 50 else '✖')
+            ax.text(w + 2, bar.get_y() + bar.get_height()/2,
+                   f'{pct:.1f}%  {icon}', ha='left', va='center', fontsize=9,
+                   fontweight='600', color='#374151')
         
-        ax.set_xlabel('Average Null Percentage', fontsize=11, fontweight='500')
-        ax.set_title('Null Value Distribution by Table', fontsize=14, fontweight='bold', pad=15)
-        ax.set_xlim(0, max(null_percentages) * 1.2 if null_percentages else 100)
+        # Severity zones
+        ax.axvline(x=10, color='#10B981', linestyle=':', alpha=0.4, lw=1)
+        ax.axvline(x=25, color='#F59E0B', linestyle='--', alpha=0.4, lw=1.5, label='Warning (25%)')
+        ax.axvline(x=50, color='#EF4444', linestyle='--', alpha=0.4, lw=1.5, label='Critical (50%)')
+        
+        ax.set_xlabel('Average Null Percentage', fontsize=12, fontweight='600', color='#374151')
+        ax.set_title('Null Value Distribution by Table', fontsize=16, fontweight='bold',
+                     pad=20, color='#111827')
+        ax.set_xlim(0, max_pct * 1.25 if max_pct > 0 else 100)
         ax.invert_yaxis()
-        ax.grid(axis='x', alpha=0.3, linestyle='--')
+        ax.grid(axis='x', alpha=0.1)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#E5E7EB')
+        ax.legend(loc='lower right', fontsize=8, fancybox=True, edgecolor='#E5E7EB')
         
-        # Add threshold lines
-        ax.axvline(x=25, color='#F59E0B', linestyle='--', alpha=0.5, label='Warning (25%)')
-        ax.axvline(x=50, color='#EF4444', linestyle='--', alpha=0.5, label='Critical (50%)')
-        ax.legend(loc='lower right', fontsize=8)
-        
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'heatmap_null_distribution', fig)
+        return self._save_chart(dataset_id, 'heatmap_null', fig)
     
     def _generate_null_distribution_chart(self, dataset_id: str, results: Dict) -> Optional[str]:
         """Generate detailed null distribution chart showing columns with nulls."""
@@ -789,55 +877,60 @@ class ChartGenerator:
             else:
                 colors.append('#10B981')
         
-        bars = ax.barh(labels, values, color=colors, edgecolor='white', linewidth=0.5, height=0.7)
+        bars = ax.barh(labels, values, color=colors, edgecolor='white', linewidth=1.5,
+                       height=0.65, alpha=0.85)
         
-        # Add percentage labels
         for bar, val in zip(bars, values):
+            icon = '✔' if val < 25 else ('⚠' if val < 50 else '✖')
             ax.text(bar.get_width() + 2, bar.get_y() + bar.get_height()/2,
-                   f'{val:.1f}%', ha='left', va='center', fontsize=9)
+                   f'{val:.1f}%  {icon}', ha='left', va='center', fontsize=9, fontweight='600')
         
-        ax.set_xlabel('Null Percentage', fontsize=11, fontweight='500')
-        ax.set_title('Columns with Null Values', fontsize=14, fontweight='bold', pad=15)
+        ax.set_xlabel('Null Percentage', fontsize=12, fontweight='600', color='#374151')
+        ax.set_title('Columns with Null Values', fontsize=16, fontweight='bold',
+                     pad=20, color='#111827')
         ax.set_xlim(0, 110)
         ax.invert_yaxis()
-        ax.grid(axis='x', alpha=0.3, linestyle='--')
+        ax.grid(axis='x', alpha=0.1)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#E5E7EB')
         
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'bar_null_columns', fig)
+        return self._save_chart(dataset_id, 'bar_null_distribution', fig)
     
     # ========================================================================
     # QUALITY ANALYSIS CHARTS
     # ========================================================================
     
     def _generate_quality_gauge(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate modern quality score gauge."""
+        """Generate premium neon-style quality score gauge."""
         summary = results.get('summary', {})
         quality_score = summary.get('quality_score', 0)
         
-        fig, ax = plt.subplots(figsize=(10, 8))
+        fig, ax = plt.subplots(figsize=(11, 9))
+        fig.set_facecolor('#0F172A')  # Dark background for neon effect
         
-        # Create gauge background
-        theta = np.linspace(0, np.pi, 100) if NUMPY_AVAILABLE else [i * math.pi / 99 for i in range(100)]
+        theta = np.linspace(0, np.pi, 200) if NUMPY_AVAILABLE else [i * math.pi / 199 for i in range(200)]
         
-        # Background arc
-        for i, t in enumerate(theta[:-1]):
-            color_idx = int(i / 33)
-            if color_idx == 0:
-                color = '#EF4444'  # Red
-            elif color_idx == 1:
-                color = '#F59E0B'  # Amber
-            else:
-                color = '#10B981'  # Green
-            
-            wedge = Wedge((0, 0), 1, math.degrees(t), math.degrees(theta[i+1]), 
-                         width=0.3, facecolor=color, alpha=0.2)
-            ax.add_patch(wedge)
+        # Background arc segments (red → amber → green)
+        segment_colors = [
+            ('#EF4444', 0, 0.33),
+            ('#F59E0B', 0.33, 0.66),
+            ('#10B981', 0.66, 1.0),
+        ]
         
-        # Score arc
-        score_angle = np.pi * (quality_score / 100) if NUMPY_AVAILABLE else math.pi * (quality_score / 100)
+        for color, start_pct, end_pct in segment_colors:
+            s_idx = int(start_pct * len(theta))
+            e_idx = int(end_pct * len(theta))
+            for i in range(s_idx, min(e_idx, len(theta) - 1)):
+                wedge = Wedge((0, 0), 1.05, math.degrees(theta[i]), math.degrees(theta[i+1]),
+                             width=0.28, facecolor=color, alpha=0.12)
+                ax.add_patch(wedge)
+        
+        # Score arc with neon glow
+        score_angle = math.pi * (quality_score / 100)
         
         if quality_score >= 80:
             score_color = '#10B981'
@@ -848,54 +941,85 @@ class ChartGenerator:
         else:
             score_color = '#EF4444'
         
-        # Draw score wedge
-        wedge = Wedge((0, 0), 1, 0, math.degrees(score_angle), width=0.3, 
-                     facecolor=score_color, edgecolor='white', linewidth=2)
-        ax.add_patch(wedge)
+        # Glow layers
+        for width_mult, alpha in [(0.38, 0.06), (0.34, 0.12), (0.30, 0.25)]:
+            glow = Wedge((0, 0), 1.05, 0, math.degrees(score_angle),
+                        width=width_mult, facecolor=score_color, alpha=alpha)
+            ax.add_patch(glow)
         
-        # Add needle
-        needle_angle = score_angle
-        needle_x = 0.85 * math.cos(needle_angle)
-        needle_y = 0.85 * math.sin(needle_angle)
-        ax.annotate('', xy=(needle_x, needle_y), xytext=(0, 0),
-                   arrowprops=dict(arrowstyle='->', color='#374151', lw=3))
+        # Main score arc
+        score_wedge = Wedge((0, 0), 1.05, 0, math.degrees(score_angle),
+                           width=0.28, facecolor=score_color, edgecolor='none')
+        ax.add_patch(score_wedge)
         
-        # Center circle
-        center_circle = plt.Circle((0, 0), 0.15, color=score_color, zorder=5)
-        ax.add_patch(center_circle)
+        # Needle with glow
+        needle_x = 0.9 * math.cos(score_angle)
+        needle_y = 0.9 * math.sin(score_angle)
+        # Needle glow
+        ax.plot([0, needle_x], [0, needle_y], color=score_color, lw=4, alpha=0.3, zorder=4)
+        ax.plot([0, needle_x], [0, needle_y], color='white', lw=2, alpha=0.8, zorder=5)
+        
+        # Center dot
+        for r, alpha in [(0.18, 0.15), (0.14, 0.3), (0.10, 0.8)]:
+            center = plt.Circle((0, 0), r, color=score_color, alpha=alpha, zorder=6)
+            ax.add_patch(center)
         
         # Score text
-        ax.text(0, -0.5, f'{quality_score}', ha='center', va='center',
-               fontsize=60, fontweight='bold', color=score_color)
-        ax.text(0, -0.75, 'Quality Score', ha='center', va='center',
-               fontsize=16, color='#6B7280')
+        ax.text(0, -0.45, f'{quality_score}', ha='center', va='center',
+               fontsize=64, fontweight='bold', color=score_color, zorder=7,
+               path_effects=[path_effects.withStroke(linewidth=3, foreground=score_color, alpha=0.2)])
+        ax.text(0, -0.72, 'Quality Score', ha='center', va='center',
+               fontsize=15, color='#94A3B8', fontweight='500')
         
         # Quality label
         if quality_score >= 80:
-            label = 'Excellent'
+            label = 'EXCELLENT'
         elif quality_score >= 60:
-            label = 'Good'
+            label = 'GOOD'
         elif quality_score >= 40:
-            label = 'Fair'
+            label = 'FAIR'
         else:
-            label = 'Needs Improvement'
-        ax.text(0, -0.95, label, ha='center', va='center',
-               fontsize=14, fontweight='bold', color=score_color)
+            label = 'NEEDS IMPROVEMENT'
+        ax.text(0, -0.92, label, ha='center', va='center',
+               fontsize=13, fontweight='bold', color=score_color,
+               path_effects=[path_effects.withStroke(linewidth=2, foreground=score_color, alpha=0.15)])
         
         # Scale labels
-        ax.text(-1.1, 0, '0', ha='center', va='center', fontsize=10, color='#9CA3AF')
-        ax.text(0, 1.1, '50', ha='center', va='center', fontsize=10, color='#9CA3AF')
-        ax.text(1.1, 0, '100', ha='center', va='center', fontsize=10, color='#9CA3AF')
+        for val, angle in [(0, 0), (25, math.pi * 0.25), (50, math.pi * 0.5),
+                           (75, math.pi * 0.75), (100, math.pi)]:
+            x = 1.18 * math.cos(angle)
+            y = 1.18 * math.sin(angle)
+            ax.text(x, y, str(val), ha='center', va='center', fontsize=9,
+                   color='#64748B', fontweight='500')
+        
+        # Issue count badges
+        q_issues = results.get('quality_issues', [])
+        high_count = sum(1 for q in q_issues if q.get('severity') == 'high')
+        med_count = sum(1 for q in q_issues if q.get('severity') == 'medium')
+        low_count = sum(1 for q in q_issues if q.get('severity') == 'low')
+        
+        badge_y = -1.15
+        for x_off, count, color, label in [
+            (-0.7, high_count, '#EF4444', 'High'),
+            (0, med_count, '#F59E0B', 'Medium'),
+            (0.7, low_count, '#10B981', 'Low')]:
+            ax.text(x_off, badge_y, f'{count}', ha='center', va='center',
+                   fontsize=16, fontweight='bold', color=color)
+            ax.text(x_off, badge_y - 0.15, label, ha='center', va='center',
+                   fontsize=8, color='#64748B')
         
         ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.2, 1.3)
+        ax.set_ylim(-1.4, 1.35)
         ax.set_aspect('equal')
         ax.axis('off')
-        ax.set_title('Data Quality Assessment', fontsize=14, fontweight='bold', pad=20)
+        ax.set_title('Data Quality Assessment', fontsize=16, fontweight='bold',
+                     pad=20, color='white')
         
+        fig.text(0.99, 0.01, 'DataMind AI', fontsize=7, color='#475569',
+                 ha='right', va='bottom', alpha=0.5, style='italic')
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'gauge_quality_score', fig)
+        return self._save_chart(dataset_id, 'gauge_quality', fig)
     
     def _generate_quality_issues_chart(self, dataset_id: str, results: Dict) -> Optional[str]:
         """Generate chart of quality issues by severity."""
@@ -918,37 +1042,50 @@ class ChartGenerator:
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
         
         fig, ax = plt.subplots(figsize=(10, 7))
+        fig.set_facecolor('#FAFBFC')
         
         severities = ['High', 'Medium', 'Low']
         counts = [severity_counts['high'], severity_counts['medium'], severity_counts['low']]
         colors = ['#EF4444', '#F59E0B', '#10B981']
         
-        bars = ax.bar(severities, counts, color=colors, edgecolor='white', linewidth=2, width=0.6)
+        bars = ax.bar(severities, counts, color=colors, edgecolor='white', linewidth=2.5,
+                     width=0.55, alpha=0.85)
         
-        # Add value labels with icons
-        icons = ['⚠️', '⚡', 'ℹ️']
-        for bar, count, icon in zip(bars, counts, icons):
+        # Highlight strip
+        for bar in bars:
+            h = bar.get_height()
+            if h > 0:
+                ax.add_patch(plt.Rectangle((bar.get_x(), h - h * 0.05),
+                             bar.get_width(), h * 0.05,
+                             facecolor='white', alpha=0.25, zorder=3))
+        
+        for bar, count in zip(bars, counts):
             height = bar.get_height()
             if height > 0:
-                ax.text(bar.get_x() + bar.get_width()/2, height + max(counts) * 0.05,
-                       f'{count}', ha='center', va='bottom', fontsize=18, fontweight='bold')
+                ax.text(bar.get_x() + bar.get_width()/2, height + max(max(counts), 1) * 0.05,
+                       f'{count}', ha='center', va='bottom', fontsize=20, fontweight='bold',
+                       color='#374151')
         
-        ax.set_xlabel('Severity Level', fontsize=12, fontweight='500')
-        ax.set_ylabel('Number of Issues', fontsize=12, fontweight='500')
-        ax.set_title('Data Quality Issues by Severity', fontsize=14, fontweight='bold', pad=15)
-        ax.grid(axis='y', alpha=0.3, linestyle='--')
+        ax.set_xlabel('Severity Level', fontsize=12, fontweight='600', color='#374151')
+        ax.set_ylabel('Number of Issues', fontsize=12, fontweight='600', color='#374151')
+        ax.set_title('Data Quality Issues by Severity', fontsize=16, fontweight='bold',
+                     pad=20, color='#111827')
+        ax.grid(axis='y', alpha=0.12)
         ax.set_axisbelow(True)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#E5E7EB')
+        ax.spines['bottom'].set_color('#E5E7EB')
         
-        # Add total count
         total = sum(counts)
         ax.text(0.98, 0.98, f'Total: {total} issues', transform=ax.transAxes,
-               ha='right', va='top', fontsize=11, color='#6B7280')
+               ha='right', va='top', fontsize=12, fontweight='600', color='#6B7280',
+               bbox=dict(boxstyle='round,pad=0.4', facecolor='#F1F5F9', edgecolor='#E5E7EB'))
         
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'bar_quality_issues_severity', fig)
+        return self._save_chart(dataset_id, 'bar_quality_issues', fig)
     
     def _generate_completeness_radar(self, dataset_id: str, results: Dict) -> Optional[str]:
         """Generate radar chart of data completeness metrics."""
@@ -981,39 +1118,43 @@ class ChartGenerator:
         }
         
         fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+        fig.set_facecolor('#FAFBFC')
         
-        # Number of variables
         categories = list(metrics.keys())
         N = len(categories)
-        
-        # Calculate angles
         angles = [n / float(N) * 2 * math.pi for n in range(N)]
-        angles += angles[:1]  # Complete the loop
+        angles += angles[:1]
         
-        # Values
         values = list(metrics.values())
         values += values[:1]
         
-        # Draw the chart
-        ax.plot(angles, values, 'o-', linewidth=2, color='#06B6D4')
-        ax.fill(angles, values, alpha=0.25, color='#06B6D4')
+        # Glow fill layers
+        for alpha in [0.05, 0.12, 0.22]:
+            ax.fill(angles, values, alpha=alpha, color='#06B6D4')
+        ax.plot(angles, values, 'o-', linewidth=2.5, color='#06B6D4', markersize=8,
+               markeredgecolor='white', markeredgewidth=2)
         
-        # Set category labels
+        # Grid styling
         ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(categories, fontsize=10, fontweight='500')
-        
-        # Set y-axis limits
+        ax.set_xticklabels(categories, fontsize=11, fontweight='600', color='#374151')
         ax.set_ylim(0, 100)
         ax.set_yticks([20, 40, 60, 80, 100])
         ax.set_yticklabels(['20', '40', '60', '80', '100'], fontsize=8, color='#9CA3AF')
+        ax.set_rlabel_position(30)
+        ax.grid(color='#E5E7EB', linewidth=0.5)
+        ax.spines['polar'].set_color('#E5E7EB')
         
-        ax.set_title('Data Completeness Overview', fontsize=14, fontweight='bold', pad=20)
+        ax.set_title('Data Completeness Overview', fontsize=16, fontweight='bold',
+                     pad=25, color='#111827')
         
-        # Add value annotations
-        for angle, value, cat in zip(angles[:-1], values[:-1], categories):
-            ax.annotate(f'{value:.0f}%', xy=(angle, value), xytext=(angle, value + 10),
-                       ha='center', fontsize=9, fontweight='bold', color='#374151')
+        # Value annotations with badge style
+        for angle, value in zip(angles[:-1], values[:-1]):
+            color = '#10B981' if value >= 70 else ('#F59E0B' if value >= 40 else '#EF4444')
+            ax.annotate(f'{value:.0f}%', xy=(angle, value), xytext=(angle, value + 12),
+                       ha='center', fontsize=10, fontweight='bold', color=color,
+                       path_effects=[path_effects.withStroke(linewidth=2, foreground='white')])
         
+        self._add_watermark(fig)
         plt.tight_layout()
         
         return self._save_chart(dataset_id, 'radar_completeness', fig)
@@ -1023,7 +1164,7 @@ class ChartGenerator:
     # ========================================================================
     
     def _generate_network_graph(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate network graph visualization of table relationships."""
+        """Generate premium dark-mode network graph with neon edges and glow nodes."""
         relationships = results.get('relationships', [])
         tables = results.get('tables', [])
         
@@ -1035,26 +1176,22 @@ class ChartGenerator:
         inferred_rels = detector.analyze_all_relationships(tables)
         
         fig, ax = plt.subplots(figsize=(16, 14))
+        fig.set_facecolor('#0F172A')
         
         # Get unique tables
         involved_tables = set()
         for rel in relationships:
             involved_tables.add(rel.get('from_table'))
             involved_tables.add(rel.get('to_table'))
-        
-        # Add tables from inferred relationships
-        for rel in inferred_rels[:10]:  # Top 10 inferred
+        for rel in inferred_rels[:10]:
             involved_tables.add(rel.get('from_table'))
             involved_tables.add(rel.get('to_table'))
-        
-        # If still not enough, add some tables
         if len(involved_tables) < 3:
             for t in tables[:10]:
                 involved_tables.add(t.get('name'))
         
         involved_tables = [t for t in involved_tables if t]
         n_tables = len(involved_tables)
-        
         if n_tables < 2:
             return None
         
@@ -1062,148 +1199,155 @@ class ChartGenerator:
         radius = 5
         angles = [2 * math.pi * i / n_tables for i in range(n_tables)]
         positions = {}
-        
         for i, table in enumerate(involved_tables):
             x = radius * math.cos(angles[i] - math.pi/2)
             y = radius * math.sin(angles[i] - math.pi/2)
             positions[table] = (x, y)
         
-        # Draw connections (explicit relationships)
+        # Draw connections — explicit (neon glow)
         for rel in relationships:
-            from_pos = positions.get(rel.get('from_table'))
-            to_pos = positions.get(rel.get('to_table'))
-            
-            if from_pos and to_pos:
-                ax.annotate('', xy=to_pos, xytext=from_pos,
-                           arrowprops=dict(arrowstyle='-|>', color='#4F46E5',
-                                          connectionstyle='arc3,rad=0.1',
-                                          lw=2.5))
+            fp = positions.get(rel.get('from_table'))
+            tp = positions.get(rel.get('to_table'))
+            if fp and tp:
+                for lw, alpha in [(7, 0.06), (4, 0.15), (2, 0.6)]:
+                    ax.annotate('', xy=tp, xytext=fp,
+                               arrowprops=dict(arrowstyle='-|>', color='#818CF8',
+                                              connectionstyle='arc3,rad=0.1',
+                                              lw=lw, alpha=alpha))
         
-        # Draw inferred relationships (dashed)
+        # Draw connections — inferred (dashed cyan glow)
         for rel in inferred_rels[:10]:
-            from_pos = positions.get(rel.get('from_table'))
-            to_pos = positions.get(rel.get('to_table'))
-            
-            if from_pos and to_pos:
-                confidence = rel.get('confidence', 0.5)
-                alpha = 0.3 + confidence * 0.5
-                ax.annotate('', xy=to_pos, xytext=from_pos,
+            fp = positions.get(rel.get('from_table'))
+            tp = positions.get(rel.get('to_table'))
+            if fp and tp:
+                conf = rel.get('confidence', 0.5)
+                ax.annotate('', xy=tp, xytext=fp,
                            arrowprops=dict(arrowstyle='-|>', color='#06B6D4',
-                                          linestyle='--', lw=1.5, alpha=alpha,
+                                          linestyle='--', lw=1.5, alpha=0.2 + conf * 0.4,
                                           connectionstyle='arc3,rad=-0.1'))
         
-        # Draw table nodes
-        # Get row counts for sizing
+        # Draw table nodes with glow
         table_rows = {t.get('name'): t.get('row_count', 100) for t in tables}
         max_rows = max(table_rows.values()) if table_rows else 1
         
-        for table, (x, y) in positions.items():
-            # Size based on row count
+        for idx, (table, (x, y)) in enumerate(positions.items()):
             rows = table_rows.get(table, 100)
-            node_size = 0.4 + (rows / max_rows) * 0.4
+            node_size = 0.45 + (rows / max_rows) * 0.45
+            color = self.COLORS[idx % len(self.COLORS)]
             
-            # Draw node
-            circle = plt.Circle((x, y), node_size, color='#4F46E5', 
-                                ec='white', lw=3, zorder=10)
+            # Glow layers
+            for r_mult, alpha in [(2.5, 0.04), (1.8, 0.10), (1.3, 0.18)]:
+                glow = plt.Circle((x, y), node_size * r_mult, color=color, alpha=alpha, zorder=3)
+                ax.add_patch(glow)
+            
+            # Core node
+            circle = plt.Circle((x, y), node_size, color=color, ec='white', lw=2, zorder=10)
             ax.add_patch(circle)
             
-            # Add table name
-            ax.text(x, y - node_size - 0.3, table[:18], ha='center', va='top',
-                   fontsize=9, fontweight='bold', color='#374151')
+            # Row count inside
+            if rows >= 1000:
+                rlabel = f'{rows/1000:.1f}K'
+            else:
+                rlabel = str(rows)
+            ax.text(x, y, rlabel, ha='center', va='center', fontsize=7,
+                   color='white', fontweight='bold', zorder=11)
+            
+            # Table name below
+            ax.text(x, y - node_size - 0.35, table[:18], ha='center', va='top',
+                   fontsize=9, fontweight='bold', color='#CBD5E1', zorder=11)
+        
+        # Decorative background stars
+        if NUMPY_AVAILABLE:
+            np.random.seed(99)
+            ax.scatter(np.random.uniform(-8, 8, 60), np.random.uniform(-8, 8, 60),
+                      s=np.random.uniform(0.2, 1.2, 60), color='white', alpha=0.25, zorder=1)
         
         # Legend
-        explicit_line = mpatches.Patch(color='#4F46E5', label='Explicit FK Relationship')
-        inferred_line = mpatches.Patch(color='#06B6D4', label='Inferred Relationship')
-        ax.legend(handles=[explicit_line, inferred_line], loc='upper left', fontsize=10)
+        explicit_line = mpatches.Patch(color='#818CF8', label='Explicit FK')
+        inferred_line = mpatches.Patch(color='#06B6D4', label='Inferred')
+        leg = ax.legend(handles=[explicit_line, inferred_line], loc='upper left', fontsize=10,
+                       facecolor='#1E293B', edgecolor='#334155', labelcolor='white')
         
         ax.set_xlim(-8, 8)
         ax.set_ylim(-8, 8)
         ax.set_aspect('equal')
         ax.axis('off')
-        ax.set_title('Table Relationship Network', fontsize=16, fontweight='bold', pad=20)
+        ax.set_title('Table Relationship Network', fontsize=18, fontweight='bold',
+                     pad=20, color='white')
         
-        # Add stats
-        stats_text = f'Tables: {n_tables} | Explicit: {len(relationships)} | Inferred: {len(inferred_rels)}'
+        stats_text = f'{n_tables} tables  ·  {len(relationships)} explicit  ·  {len(inferred_rels)} inferred'
         ax.text(0.5, -0.02, stats_text, transform=ax.transAxes, ha='center',
-               fontsize=10, color='#6B7280')
+               fontsize=10, color='#94A3B8')
         
+        fig.text(0.99, 0.01, 'DataMind AI', fontsize=7, color='#475569',
+                 ha='right', va='bottom', alpha=0.5, style='italic')
         plt.tight_layout()
         
         return self._save_chart(dataset_id, 'network_relationships', fig)
     
     def _generate_relationship_heatmap(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate heatmap showing relationship strengths between tables."""
+        """Generate premium heatmap showing relationship strengths between tables."""
         tables = results.get('tables', [])
         relationships = results.get('relationships', [])
         
         if not tables or len(tables) < 2:
             return None
         
-        # Build relationship matrix
         table_names = [t.get('name', '')[:15] for t in tables[:12]]
         n = len(table_names)
-        
         matrix = [[0 for _ in range(n)] for _ in range(n)]
-        
-        # Fill matrix with relationship data
         name_to_idx = {name: i for i, name in enumerate(table_names)}
         
         for rel in relationships:
-            from_name = rel.get('from_table', '')[:15]
-            to_name = rel.get('to_table', '')[:15]
-            
-            if from_name in name_to_idx and to_name in name_to_idx:
-                i = name_to_idx[from_name]
-                j = name_to_idx[to_name]
-                matrix[i][j] = 1
-                matrix[j][i] = 0.5  # Reverse direction weaker
+            fn = rel.get('from_table', '')[:15]
+            tn = rel.get('to_table', '')[:15]
+            if fn in name_to_idx and tn in name_to_idx:
+                matrix[name_to_idx[fn]][name_to_idx[tn]] = 1
+                matrix[name_to_idx[tn]][name_to_idx[fn]] = 0.5
         
-        # Use advanced detector for inferred relationships
         detector = AdvancedRelationshipDetector()
         inferred = detector.analyze_all_relationships(tables)
-        
         for rel in inferred:
-            from_name = rel.get('from_table', '')[:15]
-            to_name = rel.get('to_table', '')[:15]
-            confidence = rel.get('confidence', 0.5)
-            
-            if from_name in name_to_idx and to_name in name_to_idx:
-                i = name_to_idx[from_name]
-                j = name_to_idx[to_name]
-                if matrix[i][j] == 0:  # Don't overwrite explicit relationships
-                    matrix[i][j] = confidence * 0.7
+            fn = rel.get('from_table', '')[:15]
+            tn = rel.get('to_table', '')[:15]
+            conf = rel.get('confidence', 0.5)
+            if fn in name_to_idx and tn in name_to_idx:
+                i, j = name_to_idx[fn], name_to_idx[tn]
+                if matrix[i][j] == 0:
+                    matrix[i][j] = conf * 0.7
         
         fig, ax = plt.subplots(figsize=(14, 12))
+        fig.set_facecolor('#FAFBFC')
         
-        # Create heatmap
+        cmap = LinearSegmentedColormap.from_list('rel',
+            ['#F8FAFC', '#BFDBFE', '#3B82F6', '#1E3A8A'], N=256)
+        
         if NUMPY_AVAILABLE:
-            matrix_np = np.array(matrix)
-            im = ax.imshow(matrix_np, cmap='Blues', aspect='auto', vmin=0, vmax=1)
+            im = ax.imshow(np.array(matrix), cmap=cmap, aspect='auto', vmin=0, vmax=1)
         else:
-            im = ax.imshow(matrix, cmap='Blues', aspect='auto', vmin=0, vmax=1)
+            im = ax.imshow(matrix, cmap=cmap, aspect='auto', vmin=0, vmax=1)
         
-        # Add colorbar
-        cbar = plt.colorbar(im, ax=ax, shrink=0.8)
-        cbar.set_label('Relationship Strength', fontsize=11)
+        cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02)
+        cbar.set_label('Relationship Strength', fontsize=11, fontweight='600')
         
-        # Set labels
         ax.set_xticks(range(n))
         ax.set_yticks(range(n))
         ax.set_xticklabels(table_names, rotation=45, ha='right', fontsize=9)
         ax.set_yticklabels(table_names, fontsize=9)
         
-        # Add value annotations
         for i in range(n):
             for j in range(n):
                 if matrix[i][j] > 0:
-                    text_color = 'white' if matrix[i][j] > 0.5 else 'black'
+                    tc = 'white' if matrix[i][j] > 0.5 else '#1E293B'
                     ax.text(j, i, f'{matrix[i][j]:.1f}', ha='center', va='center',
-                           fontsize=8, color=text_color, fontweight='bold')
+                           fontsize=8, color=tc, fontweight='bold')
         
-        ax.set_title('Table Relationship Matrix', fontsize=14, fontweight='bold', pad=15)
-        ax.set_xlabel('Target Table', fontsize=11, fontweight='500')
-        ax.set_ylabel('Source Table', fontsize=11, fontweight='500')
+        ax.set_title('Table Relationship Matrix', fontsize=16, fontweight='bold',
+                     pad=20, color='#111827')
+        ax.set_xlabel('Target Table', fontsize=12, fontweight='600', color='#374151')
+        ax.set_ylabel('Source Table', fontsize=12, fontweight='600', color='#374151')
         
+        self._add_watermark(fig)
         plt.tight_layout()
         
         return self._save_chart(dataset_id, 'heatmap_relationships', fig)
@@ -1301,14 +1445,699 @@ class ChartGenerator:
         
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'hierarchy_table_dependencies', fig)
+        return self._save_chart(dataset_id, 'hierarchy_tables', fig)
+    
+    # ========================================================================
+    # NEW ADVANCED CHARTS
+    # ========================================================================
+    
+    def _generate_sankey_dataflow(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate Sankey-style data flow diagram showing relationships as curved bands."""
+        relationships = results.get('relationships', [])
+        tables = results.get('tables', [])
+        
+        if not relationships or len(relationships) < 1:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(16, 10))
+        fig.set_facecolor('#FAFBFC')
+        
+        # Collect tables involved in relationships
+        left_tables = []
+        right_tables = []
+        flows = []
+        
+        for rel in relationships:
+            ft = rel.get('from_table', '')
+            tt = rel.get('to_table', '')
+            if ft and tt:
+                if ft not in left_tables:
+                    left_tables.append(ft)
+                if tt not in right_tables:
+                    right_tables.append(tt)
+                conf = rel.get('confidence', 80)
+                flows.append((ft, tt, max(conf, 30)))
+        
+        if not flows:
+            plt.close(fig)
+            return None
+        
+        n_left = len(left_tables)
+        n_right = len(right_tables)
+        
+        # Position nodes
+        left_y = {t: (i + 0.5) / n_left for i, t in enumerate(left_tables)}
+        right_y = {t: (i + 0.5) / n_right for i, t in enumerate(right_tables)}
+        
+        x_left = 0.12
+        x_right = 0.88
+        
+        # Draw flow bands
+        for ft, tt, weight in flows:
+            ly = left_y.get(ft, 0.5)
+            ry = right_y.get(tt, 0.5)
+            band_w = weight / 300.0 * 0.08
+            
+            color_idx = left_tables.index(ft) % len(self.COLORS)
+            color = self.COLORS[color_idx]
+            
+            # Bezier curve via fill_between
+            xs = np.linspace(x_left + 0.06, x_right - 0.06, 50)
+            t_param = (xs - xs[0]) / (xs[-1] - xs[0])
+            ys = ly + (ry - ly) * (3 * t_param**2 - 2 * t_param**3)
+            
+            ax.fill_between(xs, ys - band_w, ys + band_w,
+                           color=color, alpha=0.35, zorder=2)
+            ax.plot(xs, ys, color=color, alpha=0.7, lw=1.5, zorder=3)
+        
+        # Draw left nodes
+        for i, table in enumerate(left_tables):
+            y = left_y[table]
+            color = self.COLORS[i % len(self.COLORS)]
+            box = FancyBboxPatch((x_left - 0.06, y - 0.025), 0.12, 0.05,
+                                boxstyle="round,pad=0.008",
+                                facecolor=color, edgecolor='white', linewidth=2, zorder=5)
+            ax.add_patch(box)
+            ax.text(x_left, y, table[:16], ha='center', va='center',
+                   fontsize=8, fontweight='bold', color='white', zorder=6)
+        
+        # Draw right nodes
+        for i, table in enumerate(right_tables):
+            y = right_y[table]
+            color = self.COLORS[(i + 3) % len(self.COLORS)]
+            box = FancyBboxPatch((x_right - 0.06, y - 0.025), 0.12, 0.05,
+                                boxstyle="round,pad=0.008",
+                                facecolor=color, edgecolor='white', linewidth=2, zorder=5)
+            ax.add_patch(box)
+            ax.text(x_right, y, table[:16], ha='center', va='center',
+                   fontsize=8, fontweight='bold', color='white', zorder=6)
+        
+        # Labels
+        ax.text(x_left, 1.02, 'Source Tables', ha='center', va='bottom',
+               fontsize=11, fontweight='bold', color='#4B5563', transform=ax.transAxes)
+        ax.text(x_right, 1.02, 'Target Tables', ha='center', va='bottom',
+               fontsize=11, fontweight='bold', color='#4B5563', transform=ax.transAxes)
+        
+        ax.set_xlim(0, 1)
+        ax.set_ylim(-0.05, 1.05)
+        ax.axis('off')
+        ax.set_title('Data Flow Diagram', fontsize=16, fontweight='bold', pad=25, color='#111827')
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'sankey_dataflow', fig)
+    
+    def _generate_schema_constellation(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate constellation-style schema map with force-directed layout."""
+        tables = results.get('tables', [])
+        relationships = results.get('relationships', [])
+        
+        if not tables or len(tables) < 2:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(16, 16))
+        fig.set_facecolor('#0F172A')  # Dark background for constellation effect
+        
+        n = len(tables)
+        table_names = [t.get('name', '') for t in tables]
+        table_rows = {t.get('name', ''): t.get('row_count', 100) for t in tables}
+        max_rows = max(table_rows.values()) if table_rows else 1
+        
+        # Force-directed simple layout (spring algorithm)
+        # Start with circular placement
+        positions = {}
+        for i, name in enumerate(table_names):
+            angle = 2 * math.pi * i / n - math.pi / 2
+            r = 4.0
+            positions[name] = [r * math.cos(angle), r * math.sin(angle)]
+        
+        # Simple spring simulation (20 iterations)
+        for iteration in range(20):
+            forces = {name: [0.0, 0.0] for name in table_names}
+            
+            # Repulsion between all nodes
+            for i, n1 in enumerate(table_names):
+                for j, n2 in enumerate(table_names):
+                    if i >= j:
+                        continue
+                    dx = positions[n1][0] - positions[n2][0]
+                    dy = positions[n1][1] - positions[n2][1]
+                    dist = max(math.sqrt(dx*dx + dy*dy), 0.1)
+                    repulsion = 8.0 / (dist * dist)
+                    fx = repulsion * dx / dist
+                    fy = repulsion * dy / dist
+                    forces[n1][0] += fx
+                    forces[n1][1] += fy
+                    forces[n2][0] -= fx
+                    forces[n2][1] -= fy
+            
+            # Attraction along relationships
+            for rel in relationships:
+                ft = rel.get('from_table', '')
+                tt = rel.get('to_table', '')
+                if ft in positions and tt in positions:
+                    dx = positions[tt][0] - positions[ft][0]
+                    dy = positions[tt][1] - positions[ft][1]
+                    dist = max(math.sqrt(dx*dx + dy*dy), 0.1)
+                    attraction = dist * 0.3
+                    fx = attraction * dx / dist
+                    fy = attraction * dy / dist
+                    forces[ft][0] += fx
+                    forces[ft][1] += fy
+                    forces[tt][0] -= fx
+                    forces[tt][1] -= fy
+            
+            # Apply forces with damping
+            damping = 0.5 * (1 - iteration / 20)
+            for name in table_names:
+                positions[name][0] += forces[name][0] * damping
+                positions[name][1] += forces[name][1] * damping
+        
+        # Draw connection "beams" (glow effect on dark background)
+        for rel in relationships:
+            ft = rel.get('from_table', '')
+            tt = rel.get('to_table', '')
+            if ft in positions and tt in positions:
+                x1, y1 = positions[ft]
+                x2, y2 = positions[tt]
+                # Glow layers
+                for lw, alpha in [(6, 0.08), (4, 0.15), (2, 0.4), (1, 0.8)]:
+                    ax.plot([x1, x2], [y1, y2], color='#06B6D4', lw=lw, alpha=alpha, zorder=2)
+        
+        # Draw stars (table nodes)
+        for i, name in enumerate(table_names):
+            x, y = positions[name]
+            rows = table_rows.get(name, 100)
+            node_r = 0.3 + (rows / max_rows) * 0.5
+            color = self.COLORS[i % len(self.COLORS)]
+            
+            # Glow effect
+            for r_mult, alpha in [(3.0, 0.04), (2.0, 0.08), (1.5, 0.15)]:
+                glow = plt.Circle((x, y), node_r * r_mult, color=color, alpha=alpha, zorder=3)
+                ax.add_patch(glow)
+            
+            # Core node
+            circle = plt.Circle((x, y), node_r, color=color, ec='white', lw=2, zorder=10)
+            ax.add_patch(circle)
+            
+            # Label
+            ax.text(x, y - node_r - 0.35, name[:18], ha='center', va='top',
+                   fontsize=9, fontweight='bold', color='white', zorder=11)
+            # Row count
+            if rows >= 1000:
+                row_label = f'{rows/1000:.1f}K'
+            else:
+                row_label = str(rows)
+            ax.text(x, y, row_label, ha='center', va='center',
+                   fontsize=7, color='white', fontweight='bold', zorder=11)
+        
+        # Decorative stars in background
+        if NUMPY_AVAILABLE:
+            np.random.seed(42)
+            star_x = np.random.uniform(-8, 8, 80)
+            star_y = np.random.uniform(-8, 8, 80)
+            star_s = np.random.uniform(0.2, 1.5, 80)
+            ax.scatter(star_x, star_y, s=star_s, color='white', alpha=0.3, zorder=1)
+        
+        ax.set_xlim(-8, 8)
+        ax.set_ylim(-8, 8)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title('Schema Constellation', fontsize=18, fontweight='bold',
+                     pad=20, color='white')
+        ax.text(0.5, -0.02, f'{len(table_names)} tables · {len(relationships)} relationships',
+               transform=ax.transAxes, ha='center', fontsize=10, color='#94A3B8')
+        
+        fig.text(0.99, 0.01, 'DataMind AI', fontsize=7, color='#475569',
+                 ha='right', va='bottom', alpha=0.5, style='italic')
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'constellation_schema', fig)
+    
+    def _generate_fk_coverage_ring(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate FK coverage ring showing how well tables are interconnected."""
+        tables = results.get('tables', [])
+        relationships = results.get('relationships', [])
+        
+        if not tables:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(12, 12))
+        fig.set_facecolor('#FAFBFC')
+        
+        table_names = [t.get('name', '') for t in tables]
+        n = len(table_names)
+        
+        # Calculate connectivity per table
+        connected = set()
+        for rel in relationships:
+            connected.add(rel.get('from_table', ''))
+            connected.add(rel.get('to_table', ''))
+        
+        coverage = len(connected & set(table_names)) / max(n, 1) * 100
+        
+        # FK columns per table
+        fk_counts = {}
+        total_fks = 0
+        for table in tables:
+            fks = sum(1 for c in table.get('columns', []) if c.get('is_foreign_key'))
+            fk_counts[table.get('name', '')] = fks
+            total_fks += fks
+        
+        # Outer ring — one segment per table
+        ring_colors = []
+        ring_sizes = []
+        ring_labels = []
+        
+        for i, table in enumerate(tables):
+            name = table.get('name', '')
+            fks = fk_counts.get(name, 0)
+            is_connected = name in connected
+            ring_sizes.append(max(fks + 1, 1))
+            ring_colors.append(self.COLORS[i % len(self.COLORS)] if is_connected else '#E5E7EB')
+            ring_labels.append(name[:15])
+        
+        # Outer ring
+        wedges, _ = ax.pie(ring_sizes, labels=None, colors=ring_colors,
+                          startangle=90, radius=1.1,
+                          wedgeprops=dict(width=0.25, edgecolor='white', linewidth=2))
+        
+        # Inner coverage gauge
+        covered_angle = coverage / 100 * 360
+        gauge_bg = Wedge((0, 0), 0.75, 0, 360, width=0.18,
+                        facecolor='#F1F5F9', edgecolor='none', zorder=3)
+        ax.add_patch(gauge_bg)
+        
+        if coverage >= 80:
+            gauge_color = '#10B981'
+        elif coverage >= 50:
+            gauge_color = '#06B6D4'
+        elif coverage >= 25:
+            gauge_color = '#F59E0B'
+        else:
+            gauge_color = '#EF4444'
+        
+        gauge_fill = Wedge((0, 0), 0.75, 90, 90 - covered_angle, width=0.18,
+                          facecolor=gauge_color, edgecolor='none', zorder=4)
+        ax.add_patch(gauge_fill)
+        
+        # Center text
+        ax.text(0, 0.08, f'{coverage:.0f}%', ha='center', va='center',
+               fontsize=36, fontweight='bold', color=gauge_color, zorder=5)
+        ax.text(0, -0.12, 'FK Coverage', ha='center', va='center',
+               fontsize=12, color='#6B7280', fontweight='500', zorder=5)
+        ax.text(0, -0.28, f'{total_fks} foreign keys', ha='center', va='center',
+               fontsize=10, color='#9CA3AF', zorder=5)
+        
+        # Legend labels around the ring
+        for i, (wedge, label) in enumerate(zip(wedges, ring_labels)):
+            ang = (wedge.theta2 + wedge.theta1) / 2
+            x = 1.3 * math.cos(math.radians(ang))
+            y = 1.3 * math.sin(math.radians(ang))
+            ha = 'left' if x >= 0 else 'right'
+            ax.text(x, y, label, ha=ha, va='center', fontsize=7,
+                   color='#4B5563', fontweight='500')
+        
+        ax.set_xlim(-1.6, 1.6)
+        ax.set_ylim(-1.6, 1.6)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title('Foreign Key Coverage', fontsize=16, fontweight='bold', pad=25, color='#111827')
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'fk_coverage_ring', fig)
+    
+    def _generate_data_density_heatmap(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate a data density heatmap showing rows × columns intensity per table."""
+        tables = results.get('tables', [])
+        if not tables or len(tables) < 2:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(14, max(8, len(tables) * 0.7)))
+        fig.set_facecolor('#FAFBFC')
+        
+        sorted_tables = sorted(tables, key=lambda t: t.get('row_count', 0), reverse=True)[:15]
+        
+        names = [t.get('name', '')[:20] for t in sorted_tables]
+        rows = [t.get('row_count', 0) for t in sorted_tables]
+        cols = [len(t.get('columns', [])) for t in sorted_tables]
+        
+        # Density = rows × columns (data cells)
+        densities = [r * c for r, c in zip(rows, cols)]
+        max_density = max(densities) if densities else 1
+        
+        # Normalize for colormap
+        norm_densities = [d / max_density for d in densities]
+        
+        # Custom colormap: light cyan → deep blue
+        cmap = LinearSegmentedColormap.from_list('density',
+            ['#E0F7FA', '#06B6D4', '#0E7490', '#164E63'], N=256)
+        
+        y_pos = range(len(names))
+        bar_colors = [cmap(nd) for nd in norm_densities]
+        
+        bars = ax.barh(y_pos, densities, color=bar_colors, edgecolor='white',
+                      linewidth=1, height=0.7)
+        
+        for i, (bar, density, row, col) in enumerate(zip(bars, densities, rows, cols)):
+            w = bar.get_width()
+            if density >= 1_000_000:
+                label = f'{density/1_000_000:.1f}M cells  ({row:,}R × {col}C)'
+            elif density >= 1000:
+                label = f'{density/1000:.1f}K cells  ({row:,}R × {col}C)'
+            else:
+                label = f'{density:,} cells  ({row:,}R × {col}C)'
+            ax.text(w + max_density * 0.02, i, label,
+                   ha='left', va='center', fontsize=8, color='#4B5563', fontweight='500')
+        
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(names, fontsize=10)
+        ax.set_xlabel('Data Density (Rows × Columns)', fontsize=12, fontweight='600')
+        ax.set_title('Data Density Heatmap', fontsize=16, fontweight='bold', pad=20, color='#111827')
+        ax.invert_yaxis()
+        ax.grid(axis='x', alpha=0.12)
+        ax.set_axisbelow(True)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'density_heatmap', fig)
+    
+    def _generate_table_dna_barcode(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate 'DNA barcode' visualization — each table is a row of colored strips for columns."""
+        tables = results.get('tables', [])
+        if not tables:
+            return None
+        
+        sorted_tables = sorted(tables, key=lambda t: len(t.get('columns', [])), reverse=True)[:12]
+        max_cols = max(len(t.get('columns', [])) for t in sorted_tables) if sorted_tables else 1
+        
+        fig, ax = plt.subplots(figsize=(16, max(6, len(sorted_tables) * 0.8)))
+        fig.set_facecolor('#FAFBFC')
+        
+        type_color_map = {
+            'INTEGER': '#4F46E5',
+            'TEXT': '#06B6D4',
+            'NUMERIC': '#10B981',
+            'DATETIME': '#F59E0B',
+            'BOOLEAN': '#EC4899',
+            'BINARY': '#8B5CF6',
+        }
+        
+        for row_i, table in enumerate(sorted_tables):
+            columns = table.get('columns', [])
+            table_name = table.get('name', '')[:20]
+            
+            for col_i, col in enumerate(columns):
+                dtype = self._normalize_data_type(col.get('data_type', 'OTHER'))
+                color = type_color_map.get(dtype, '#9CA3AF')
+                is_pk = col.get('is_primary_key', False)
+                is_fk = col.get('is_foreign_key', False)
+                
+                # Draw strip
+                alpha = 0.9 if is_pk else (0.7 if is_fk else 0.55)
+                rect = plt.Rectangle((col_i, row_i - 0.35), 0.85, 0.7,
+                                    facecolor=color, alpha=alpha, edgecolor='white',
+                                    linewidth=0.5, zorder=3)
+                ax.add_patch(rect)
+                
+                # PK/FK markers
+                if is_pk:
+                    ax.text(col_i + 0.42, row_i, '★', ha='center', va='center',
+                           fontsize=7, color='white', fontweight='bold', zorder=4)
+                elif is_fk:
+                    ax.text(col_i + 0.42, row_i, '→', ha='center', va='center',
+                           fontsize=7, color='white', fontweight='bold', zorder=4)
+        
+        ax.set_yticks(range(len(sorted_tables)))
+        ax.set_yticklabels([t.get('name', '')[:20] for t in sorted_tables], fontsize=10)
+        ax.set_xlim(-0.5, max_cols + 0.5)
+        ax.set_ylim(-0.7, len(sorted_tables) - 0.3)
+        ax.set_xlabel('Column Index', fontsize=11, fontweight='500')
+        ax.invert_yaxis()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        ax.set_title('Table DNA — Column Composition Barcode', fontsize=16,
+                     fontweight='bold', pad=20, color='#111827')
+        
+        # Legend
+        legend_patches = [mpatches.Patch(color=c, label=t, alpha=0.7)
+                         for t, c in type_color_map.items()]
+        legend_patches.append(mpatches.Patch(color='#374151', label='★ = PK  → = FK', alpha=0.5))
+        ax.legend(handles=legend_patches, loc='upper right', fontsize=8,
+                 ncol=4, frameon=True, fancybox=True, edgecolor='#E5E7EB')
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'table_dna', fig)
+    
+    def _generate_column_fingerprint(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate bubble scatter showing each column's uniqueness vs null% per table."""
+        tables = results.get('tables', [])
+        if not tables:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(14, 10))
+        fig.set_facecolor('#FAFBFC')
+        
+        for t_i, table in enumerate(tables[:8]):
+            table_name = table.get('name', '')
+            color = self.COLORS[t_i % len(self.COLORS)]
+            
+            for col in table.get('columns', []):
+                null_pct = col.get('null_percentage', 0) * 100
+                unique_count = col.get('unique_count', 0)
+                total_count = col.get('total_count', 1) or 1
+                uniqueness = (unique_count / total_count) * 100
+                
+                # Bubble size based on total_count
+                size = max(20, min(300, total_count / 10))
+                
+                ax.scatter(uniqueness, null_pct, s=size, c=color, alpha=0.55,
+                          edgecolors='white', linewidths=1, zorder=3)
+        
+        # Quadrant lines
+        ax.axhline(y=10, color='#F59E0B', linestyle='--', alpha=0.3, zorder=1)
+        ax.axvline(x=50, color='#06B6D4', linestyle='--', alpha=0.3, zorder=1)
+        
+        # Quadrant labels
+        ax.text(75, 2, 'High Uniqueness\nLow Nulls ✓', ha='center', fontsize=8,
+               color='#10B981', alpha=0.6, fontweight='bold')
+        ax.text(25, 2, 'Low Uniqueness\nLow Nulls', ha='center', fontsize=8,
+               color='#F59E0B', alpha=0.6, fontweight='bold')
+        
+        ax.set_xlabel('Uniqueness %', fontsize=12, fontweight='600')
+        ax.set_ylabel('Null %', fontsize=12, fontweight='600')
+        ax.set_title('Column Fingerprint — Uniqueness vs Completeness', fontsize=16,
+                     fontweight='bold', pad=20, color='#111827')
+        ax.grid(alpha=0.1)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        # Legend — one per table
+        legend_patches = [mpatches.Patch(color=self.COLORS[i % len(self.COLORS)],
+                          label=tables[i].get('name', '')[:15], alpha=0.6)
+                         for i in range(min(len(tables), 8))]
+        ax.legend(handles=legend_patches, loc='upper right', fontsize=8,
+                 frameon=True, fancybox=True, edgecolor='#E5E7EB')
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'column_fingerprint', fig)
+    
+    def _generate_sunburst_chart(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate sunburst hierarchy chart: center=DB, ring1=tables, ring2=column types."""
+        tables = results.get('tables', [])
+        if not tables or len(tables) < 2:
+            return None
+        
+        fig, ax = plt.subplots(figsize=(14, 14))
+        fig.set_facecolor('#FAFBFC')
+        
+        db_name = results.get('database_name', 'Database')[:20]
+        
+        # --- Inner ring: tables (proportional to column count) ---
+        table_sizes = []
+        table_labels = []
+        table_colors = []
+        
+        # --- Outer ring: column types per table ---
+        outer_sizes = []
+        outer_colors = []
+        outer_labels = []
+        
+        type_color_map = {
+            'INTEGER': '#4F46E5',
+            'TEXT': '#06B6D4',
+            'NUMERIC': '#10B981',
+            'DATETIME': '#F59E0B',
+            'BOOLEAN': '#EC4899',
+            'BINARY': '#8B5CF6',
+        }
+        
+        for i, table in enumerate(tables[:10]):
+            cols = table.get('columns', [])
+            n_cols = max(len(cols), 1)
+            table_sizes.append(n_cols)
+            table_labels.append(table.get('name', '')[:15])
+            table_colors.append(self.COLORS[i % len(self.COLORS)])
+            
+            # Group columns by type
+            type_groups = defaultdict(int)
+            for col in cols:
+                dtype = self._normalize_data_type(col.get('data_type', 'OTHER'))
+                type_groups[dtype] += 1
+            
+            for dtype, count in type_groups.items():
+                outer_sizes.append(count)
+                outer_colors.append(type_color_map.get(dtype, '#9CA3AF'))
+                outer_labels.append(dtype)
+        
+        if not table_sizes:
+            plt.close(fig)
+            return None
+        
+        # Center circle — database name
+        center = plt.Circle((0, 0), 0.35, color='#1E293B', zorder=10)
+        ax.add_patch(center)
+        ax.text(0, 0.05, db_name, ha='center', va='center', fontsize=11,
+               fontweight='bold', color='white', zorder=11)
+        ax.text(0, -0.1, f'{len(tables)} tables', ha='center', va='center',
+               fontsize=8, color='#94A3B8', zorder=11)
+        
+        # Inner ring — tables
+        inner_wedges, inner_texts = ax.pie(
+            table_sizes, labels=None, colors=table_colors,
+            startangle=90, radius=0.72,
+            wedgeprops=dict(width=0.32, edgecolor='white', linewidth=2)
+        )
+        
+        # Label inner ring
+        for wedge, label in zip(inner_wedges, table_labels):
+            ang = (wedge.theta1 + wedge.theta2) / 2
+            x = 0.56 * math.cos(math.radians(ang))
+            y = 0.56 * math.sin(math.radians(ang))
+            rot = ang if -90 < ang < 90 else ang - 180
+            if wedge.theta2 - wedge.theta1 > 15:  # Only label big slices
+                ax.text(x, y, label, ha='center', va='center', fontsize=7,
+                       fontweight='bold', color='white', rotation=rot, zorder=8)
+        
+        # Outer ring — column types
+        ax.pie(outer_sizes, labels=None, colors=outer_colors,
+               startangle=90, radius=1.05,
+               wedgeprops=dict(width=0.28, edgecolor='white', linewidth=1.5))
+        
+        ax.set_xlim(-1.4, 1.4)
+        ax.set_ylim(-1.4, 1.4)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        ax.set_title('Schema Sunburst Hierarchy', fontsize=16, fontweight='bold',
+                     pad=25, color='#111827')
+        
+        # Type legend
+        type_patches = [mpatches.Patch(color=c, label=t, alpha=0.8)
+                       for t, c in type_color_map.items()]
+        ax.legend(handles=type_patches, loc='lower right', fontsize=8,
+                 title='Column Types', title_fontsize=9,
+                 frameon=True, fancybox=True, edgecolor='#E5E7EB')
+        
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'sunburst_hierarchy', fig)
+    
+    def _generate_violin_distribution(self, dataset_id: str, results: Dict) -> Optional[str]:
+        """Generate violin plot showing row count distribution + box stats."""
+        tables = results.get('tables', [])
+        if not tables or len(tables) < 3 or not NUMPY_AVAILABLE:
+            return None
+        
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8),
+                                        gridspec_kw={'width_ratios': [2, 1]})
+        fig.set_facecolor('#FAFBFC')
+        
+        row_counts = [t.get('row_count', 0) for t in tables]
+        col_counts = [len(t.get('columns', [])) for t in tables]
+        table_names = [t.get('name', '')[:15] for t in tables]
+        
+        # --- Left: bar chart with statistics overlay ---
+        sorted_idx = np.argsort(row_counts)[::-1]
+        sorted_names = [table_names[i] for i in sorted_idx]
+        sorted_rows = [row_counts[i] for i in sorted_idx]
+        
+        colors = [self.COLORS[i % len(self.COLORS)] for i in range(len(sorted_names))]
+        bars = ax1.bar(range(len(sorted_names)), sorted_rows, color=colors,
+                      edgecolor='white', linewidth=1, alpha=0.8)
+        
+        # Mean and median lines
+        mean_val = np.mean(row_counts)
+        median_val = np.median(row_counts)
+        ax1.axhline(y=mean_val, color='#EF4444', linestyle='--', lw=1.5, alpha=0.6,
+                    label=f'Mean: {mean_val:,.0f}')
+        ax1.axhline(y=median_val, color='#06B6D4', linestyle='-.', lw=1.5, alpha=0.6,
+                    label=f'Median: {median_val:,.0f}')
+        
+        ax1.set_xticks(range(len(sorted_names)))
+        ax1.set_xticklabels(sorted_names, rotation=55, ha='right', fontsize=8)
+        ax1.set_ylabel('Row Count', fontsize=11, fontweight='600')
+        ax1.set_title('Row Distribution by Table', fontsize=14, fontweight='bold', color='#111827')
+        ax1.legend(fontsize=9, loc='upper right')
+        ax1.grid(axis='y', alpha=0.12)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        
+        # --- Right: summary statistics panel ---
+        ax2.axis('off')
+        stats = {
+            'Tables': len(tables),
+            'Total Rows': f'{sum(row_counts):,}',
+            'Mean Rows': f'{mean_val:,.0f}',
+            'Median Rows': f'{median_val:,.0f}',
+            'Std Dev': f'{np.std(row_counts):,.0f}',
+            'Max Rows': f'{max(row_counts):,}',
+            'Min Rows': f'{min(row_counts):,}',
+            'Total Columns': sum(col_counts),
+            'Avg Cols/Table': f'{np.mean(col_counts):.1f}',
+        }
+        
+        y_start = 0.95
+        ax2.text(0.5, y_start + 0.05, 'Distribution Statistics',
+                ha='center', va='top', fontsize=13, fontweight='bold', color='#111827',
+                transform=ax2.transAxes)
+        
+        for i, (label, value) in enumerate(stats.items()):
+            y = y_start - i * 0.095
+            # Background band
+            if i % 2 == 0:
+                ax2.add_patch(plt.Rectangle((0.05, y - 0.035), 0.9, 0.07,
+                             facecolor='#F1F5F9', edgecolor='none',
+                             transform=ax2.transAxes, zorder=1))
+            ax2.text(0.1, y, label, ha='left', va='center', fontsize=10,
+                    color='#6B7280', transform=ax2.transAxes, zorder=2)
+            ax2.text(0.9, y, str(value), ha='right', va='center', fontsize=11,
+                    fontweight='bold', color='#111827', transform=ax2.transAxes, zorder=2)
+        
+        fig.suptitle('Statistical Distribution Analysis', fontsize=16,
+                    fontweight='bold', color='#111827', y=1.02)
+        self._add_watermark(fig)
+        plt.tight_layout()
+        
+        return self._save_chart(dataset_id, 'violin_distribution', fig)
     
     # ========================================================================
     # SCHEMA OVERVIEW CHARTS
     # ========================================================================
     
     def _generate_schema_matrix(self, dataset_id: str, results: Dict) -> Optional[str]:
-        """Generate comprehensive schema overview matrix."""
+        """Generate premium 4-panel schema overview dashboard."""
         tables = results.get('tables', [])
         summary = results.get('summary', {})
         
@@ -1316,25 +2145,28 @@ class ChartGenerator:
             return None
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 14))
+        fig.set_facecolor('#FAFBFC')
         
         # 1. Table Overview (top-left)
         ax1 = axes[0, 0]
-        table_data = [(t.get('name', '')[:20], t.get('row_count', 0), 
+        table_data = [(t.get('name', '')[:18], t.get('row_count', 0),
                        len(t.get('columns', []))) for t in tables[:10]]
         
         if table_data:
             names, rows, cols = zip(*table_data)
             x = range(len(names))
             
-            ax1.bar(x, rows, color='#06B6D4', alpha=0.7, label='Rows', width=0.4)
-            ax1.bar([i + 0.4 for i in x], [c * 100 for c in cols], color='#4F46E5', 
-                    alpha=0.7, label='Columns (×100)', width=0.4)
+            bars1 = ax1.bar(x, rows, color='#06B6D4', alpha=0.8, label='Rows', width=0.38)
+            bars2 = ax1.bar([i + 0.4 for i in x], [c * 100 for c in cols], color='#818CF8',
+                    alpha=0.8, label='Columns (×100)', width=0.38)
             
             ax1.set_xticks([i + 0.2 for i in x])
-            ax1.set_xticklabels(names, rotation=45, ha='right', fontsize=8)
-            ax1.set_title('Table Overview', fontsize=12, fontweight='bold')
-            ax1.legend(fontsize=8)
-            ax1.grid(axis='y', alpha=0.3)
+            ax1.set_xticklabels(names, rotation=45, ha='right', fontsize=7)
+            ax1.set_title('Table Overview', fontsize=13, fontweight='bold', color='#111827', pad=10)
+            ax1.legend(fontsize=8, fancybox=True, edgecolor='#E5E7EB')
+            ax1.grid(axis='y', alpha=0.12)
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
         
         # 2. Quality Distribution (top-right)
         ax2 = axes[0, 1]
@@ -1344,10 +2176,24 @@ class ChartGenerator:
             sev = issue.get('severity', 'low').capitalize()
             severity_counts[sev] = severity_counts.get(sev, 0) + 1
         
-        colors = ['#EF4444', '#F59E0B', '#10B981']
-        ax2.pie(list(severity_counts.values()), labels=list(severity_counts.keys()),
-               autopct='%1.0f%%', colors=colors, startangle=90)
-        ax2.set_title('Quality Issues Distribution', fontsize=12, fontweight='bold')
+        qcolors = ['#EF4444', '#F59E0B', '#10B981']
+        q_vals = list(severity_counts.values())
+        if sum(q_vals) > 0:
+            wedges, texts, autotexts = ax2.pie(
+                q_vals, labels=list(severity_counts.keys()),
+                autopct='%1.0f%%', colors=qcolors, startangle=90,
+                wedgeprops=dict(edgecolor='white', linewidth=2.5),
+                textprops=dict(fontweight='600'))
+            for at in autotexts:
+                at.set_fontsize(10)
+                at.set_fontweight('bold')
+        else:
+            ax2.text(0.5, 0.5, 'No Issues', ha='center', va='center',
+                    fontsize=16, fontweight='bold', color='#10B981',
+                    transform=ax2.transAxes)
+            ax2.text(0.5, 0.35, 'Quality is excellent', ha='center', va='center',
+                    fontsize=10, color='#6B7280', transform=ax2.transAxes)
+        ax2.set_title('Quality Issues', fontsize=13, fontweight='bold', color='#111827', pad=10)
         
         # 3. Column Types (bottom-left)
         ax3 = axes[1, 0]
@@ -1359,33 +2205,48 @@ class ChartGenerator:
         
         if type_counts:
             types, counts = zip(*sorted(type_counts.items(), key=lambda x: x[1], reverse=True)[:8])
-            ax3.barh(types, counts, color=[self.COLORS[i % len(self.COLORS)] for i in range(len(types))])
-            ax3.set_title('Column Data Types', fontsize=12, fontweight='bold')
-            ax3.set_xlabel('Count')
+            tcolors = [self.COLORS[i % len(self.COLORS)] for i in range(len(types))]
+            bars = ax3.barh(types, counts, color=tcolors, edgecolor='white', linewidth=1.5, alpha=0.85)
+            for bar, c in zip(bars, counts):
+                ax3.text(bar.get_width() + max(counts) * 0.02, bar.get_y() + bar.get_height()/2,
+                        str(c), va='center', fontsize=9, fontweight='bold', color='#374151')
+            ax3.set_title('Column Data Types', fontsize=13, fontweight='bold', color='#111827', pad=10)
+            ax3.set_xlabel('Count', fontsize=10)
+            ax3.spines['top'].set_visible(False)
+            ax3.spines['right'].set_visible(False)
         
-        # 4. Key Metrics (bottom-right)
+        # 4. Key Metrics (bottom-right) — card style
         ax4 = axes[1, 1]
+        ax4.axis('off')
         metrics = {
-            'Tables': len(tables),
-            'Columns': sum(len(t.get('columns', [])) for t in tables),
-            'Rows (K)': sum(t.get('row_count', 0) for t in tables) / 1000,
-            'Relationships': len(results.get('relationships', [])),
-            'Quality Score': summary.get('quality_score', 0),
+            'Tables': (len(tables), '#06B6D4'),
+            'Total Columns': (sum(len(t.get('columns', [])) for t in tables), '#818CF8'),
+            'Total Rows': (sum(t.get('row_count', 0) for t in tables), '#10B981'),
+            'Relationships': (len(results.get('relationships', [])), '#F59E0B'),
+            'Quality Score': (summary.get('quality_score', 0), '#EC4899'),
         }
         
-        ax4.barh(list(metrics.keys()), list(metrics.values()), 
-                color=['#06B6D4', '#4F46E5', '#10B981', '#F59E0B', '#8B5CF6'])
-        ax4.set_title('Key Metrics', fontsize=12, fontweight='bold')
+        y_start = 0.92
+        ax4.text(0.5, y_start + 0.08, 'Key Metrics', ha='center', va='top',
+                fontsize=14, fontweight='bold', color='#111827', transform=ax4.transAxes)
+        for i, (label, (value, color)) in enumerate(metrics.items()):
+            y = y_start - i * 0.16
+            # Background card
+            ax4.add_patch(FancyBboxPatch((0.08, y - 0.05), 0.84, 0.12,
+                         boxstyle='round,pad=0.02', facecolor=color, alpha=0.08,
+                         edgecolor=color, linewidth=1.5, transform=ax4.transAxes))
+            ax4.text(0.15, y, label, ha='left', va='center', fontsize=11,
+                    color='#4B5563', transform=ax4.transAxes)
+            v_str = f'{value:,}' if isinstance(value, int) else f'{value:.0f}'
+            ax4.text(0.85, y, v_str, ha='right', va='center', fontsize=14,
+                    fontweight='bold', color=color, transform=ax4.transAxes)
         
-        # Add value labels
-        for i, (k, v) in enumerate(metrics.items()):
-            label = f'{v:,.0f}' if v >= 1 else f'{v:.2f}'
-            ax4.text(v + max(metrics.values()) * 0.02, i, label, va='center', fontsize=9)
-        
-        plt.suptitle('Schema Analysis Overview', fontsize=16, fontweight='bold', y=1.02)
+        fig.suptitle('Schema Analysis Overview', fontsize=18, fontweight='bold',
+                    color='#111827', y=1.01)
+        self._add_watermark(fig)
         plt.tight_layout()
         
-        return self._save_chart(dataset_id, 'matrix_schema_overview', fig)
+        return self._save_chart(dataset_id, 'matrix_overview', fig)
 
 
 def create_chart_generator(storage_manager) -> ChartGenerator:

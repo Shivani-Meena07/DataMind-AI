@@ -1,0 +1,11 @@
+{
+  "dataset_id": "NETFLIXMOVIEA5AC",
+  "generated_at": "2026-02-22T04:04:08.674443",
+  "outputs": {
+    "analysis": "analysis.json",
+    "markdown": "user_manual.md",
+    "insights": "insights.json"
+  },
+  "charts": [],
+  "version": "1.0"
+}

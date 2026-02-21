@@ -1,0 +1,12 @@
+{
+  "dataset_id": "NETFLIXMOVIEA5AC",
+  "chunk_count": 19,
+  "created_at": "2026-02-22T04:04:08.715318",
+  "strategies": [
+    "tfidf",
+    "bm25",
+    "keyword"
+  ],
+  "tfidf_features": 1623,
+  "bm25_vocab_size": 1100
+}

@@ -82,25 +82,32 @@ class DatasetVersioningSystem:
         """
         self._chart_generator = generator
     
-    def identify_dataset(self, file_path: str, file_type: str) -> FingerprintResult:
+    def identify_dataset(self, file_path: str, file_type: str, original_filename: str = '') -> FingerprintResult:
         """
         Generate deterministic ID for a dataset.
         
         This is the core identification function. Same content always
         produces the same ID, regardless of:
-        - Filename
         - Upload time
         - Upload order
+        
+        The ID is a human-readable semantic label like NETFLIXMOVIE2025.
         
         Args:
             file_path: Path to dataset file
             file_type: Type of file
+            original_filename: Original filename for semantic ID generation
             
         Returns:
             FingerprintResult with dataset_id
         """
-        result = self.fingerprinter.generate_fingerprint(file_path, file_type)
-        logger.info(f"Generated dataset ID: {result.dataset_id[:16]}... ({result.row_count} rows, {result.column_count} cols)")
+        result = self.fingerprinter.generate_fingerprint(file_path, file_type, original_filename)
+        
+        # Resolve semantic ID with storage (handles dedup + versioning)
+        resolved_id = self.storage.resolve_semantic_id(result.semantic_base, result.content_hash)
+        result.dataset_id = resolved_id
+        
+        logger.info(f"Dataset ID: {result.dataset_id} ({result.row_count} rows, {result.column_count} cols, {result.table_count} tables)")
         return result
     
     def process_dataset(
@@ -135,7 +142,7 @@ class DatasetVersioningSystem:
         start_time = time.time()
         
         # Step 1: Generate content-based ID
-        fingerprint = self.identify_dataset(file_path, file_type)
+        fingerprint = self.identify_dataset(file_path, file_type, original_filename)
         dataset_id = fingerprint.dataset_id
         
         # Step 2: Check for existing dataset
@@ -163,19 +170,18 @@ class DatasetVersioningSystem:
         """Handle case where dataset already exists."""
         import time
         
-        logger.info(f"Cache HIT for dataset {dataset_id[:16]}...")
+        logger.info(f"Cache HIT for dataset {dataset_id}")
         
         # Retrieve cached results
         analysis_results = self.storage.get_analysis_results(dataset_id)
         
         # If cached results are missing/empty, return None to trigger fresh analysis
         if not analysis_results:
-            logger.warning(f"Cache entry exists but analysis data missing for {dataset_id[:16]}... - will reprocess")
+            logger.warning(f"Cache entry exists but analysis data missing for {dataset_id} - will reprocess")
             return None
         
         # Update stats
-        self.storage._index['stats']['cache_hits'] += 1
-        self.storage._save_index()
+        self.storage.increment_stat('cache_hits')
         
         # Record access
         self.storage.record_access(dataset_id)
@@ -194,7 +200,7 @@ class DatasetVersioningSystem:
             insights=insights,
             charts=charts,
             processing_time_ms=processing_time,
-            message=f"Reused cached analysis (Dataset ID: {dataset_id[:16]}...)"
+            message=f"Reused cached analysis (Dataset ID: {dataset_id})"
         )
     
     def _handle_new_dataset(
@@ -211,7 +217,7 @@ class DatasetVersioningSystem:
         """Handle case where dataset is new."""
         import time
         
-        logger.info(f"Processing NEW dataset {dataset_id[:16]}...")
+        logger.info(f"Processing NEW dataset {dataset_id}")
         
         try:
             # Step 1: Store raw dataset
@@ -225,6 +231,11 @@ class DatasetVersioningSystem:
                 table_count=fingerprint.table_count,
                 fingerprint_algorithm=fingerprint.algorithm
             )
+            
+            # Store content hash in index for dedup
+            if dataset_id in self.storage._index['datasets']:
+                self.storage._index['datasets'][dataset_id]['content_hash'] = fingerprint.content_hash
+                self.storage._save_index()
             
             # Step 2: Run analysis (using existing AI logic)
             analyzer = analyzer_factory(file_path, file_type)
@@ -271,8 +282,7 @@ class DatasetVersioningSystem:
             })
             
             # Update stats
-            self.storage._index['stats']['total_analyses'] += 1
-            self.storage._save_index()
+            self.storage.increment_stat('total_analyses')
             
             processing_time = (time.time() - start_time) * 1000
             
@@ -284,7 +294,7 @@ class DatasetVersioningSystem:
                 insights=insights,
                 charts=charts,
                 processing_time_ms=processing_time,
-                message=f"New analysis completed (Dataset ID: {dataset_id[:16]}...)"
+                message=f"New analysis completed (Dataset ID: {dataset_id})"
             )
             
         except Exception as e:

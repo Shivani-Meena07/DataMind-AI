@@ -1,23 +1,32 @@
 {
-  "created_at": "2026-02-21T23:16:33.7175647+05:30",
+  "created_at": "2026-02-22T02:04:27.4418178+05:30",
   "datasets": {
-    "a5ace9556eab50f7d8d256ee5a3835d04797f794b8a07cdd9c50b4d031078309": {
-      "original_filename": "netflix_titles.csv",
-      "created_at": "2026-02-21T23:18:35.669558",
+    "DEMOECOMMERCE6CC7": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-22T02:42:20.069788",
       "analysis_status": "completed",
-      "file_type": "csv"
+      "file_type": "sqlite",
+      "content_hash": "6cc77197020e2dd3226e865f48a98763725bcc73a5ce690b2595f2ee4f161c47"
     },
-    "8a37ab6d7aa87106cdff9b700dc168d12dca9338956206eb3458d67e91b66c99": {
-      "original_filename": "olist_customers_dataset.csv",
-      "created_at": "2026-02-21T23:23:33.559156",
+    "NETFLIXMOVIEA5AC": {
+      "original_filename": "netflix_titles.csv",
+      "created_at": "2026-02-22T04:04:08.532338",
       "analysis_status": "completed",
-      "file_type": "csv"
+      "file_type": "csv",
+      "content_hash": "a5ace9556eab50f7d8d256ee5a3835d04797f794b8a07cdd9c50b4d031078309"
+    },
+    "OLISTCUSTOMER8A37": {
+      "original_filename": "olist_customers_dataset.csv",
+      "created_at": "2026-02-22T04:22:16.522301",
+      "analysis_status": "completed",
+      "file_type": "csv",
+      "content_hash": "8a37ab6d7aa87106cdff9b700dc168d12dca9338956206eb3458d67e91b66c99"
     }
   },
   "version": "1.0.0",
   "stats": {
-    "total_analyses": 2,
-    "total_datasets": 2,
-    "cache_hits": 2
+    "total_analyses": 6,
+    "total_datasets": 6,
+    "cache_hits": 11
   }
 }
