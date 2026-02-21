@@ -1,0 +1,10 @@
+# DataMind AI Web Application Requirements
+# No OpenAI API key needed!
+
+flask>=3.0.0
+flask-cors>=4.0.0
+werkzeug>=3.0.0
+
+# For CSV/Excel/JSON support (optional but recommended)
+pandas>=2.0.0
+openpyxl>=3.1.0

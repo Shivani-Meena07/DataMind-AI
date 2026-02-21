@@ -1,0 +1,15 @@
+{
+  "dataset_id": "28bcdcd9e5521b105face38b0eb428f77148d28db125558ea27746161443d999",
+  "original_filename": "demo_ecommerce.db",
+  "file_type": "sqlite",
+  "created_at": "2026-02-21T09:18:42.393926",
+  "row_count": 1193,
+  "column_count": 52,
+  "table_count": 9,
+  "file_size_bytes": 253952,
+  "fingerprint_algorithm": "sha256",
+  "quality_score": 75,
+  "analysis_status": "completed",
+  "last_accessed": null,
+  "access_count": 0
+}

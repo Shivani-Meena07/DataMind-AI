@@ -1,0 +1,11 @@
+{
+  "dataset_id": "19d6274207b10cf061a64c5c7b9017a3e64bf0703c93b4605b1c7fabbdc1c94e",
+  "generated_at": "2026-02-21T12:30:14.774381",
+  "outputs": {
+    "analysis": "analysis.json",
+    "markdown": "user_manual.md",
+    "insights": "insights.json"
+  },
+  "charts": [],
+  "version": "1.0"
+}

@@ -1,0 +1,1335 @@
+{
+  "database_name": "demo_ecommerce",
+  "analysis_date": "2026-02-21T12:58:28.551130",
+  "summary": {
+    "total_tables": 9,
+    "total_columns": 52,
+    "total_rows": 1173,
+    "total_relationships": 6,
+    "quality_issues": 4,
+    "quality_score": 80
+  },
+  "tables": [
+    {
+      "name": "customers",
+      "row_count": 100,
+      "table_type": "dimension",
+      "business_description": "Stores customer information including contact details and demographics",
+      "primary_keys": [
+        "customer_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_customers_1"
+      ],
+      "columns": [
+        {
+          "name": "customer_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 100,
+          "total_count": 100,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "06mdrsw1j41mbn216xad4g0q31m6uozs",
+            "0dw1a7r9rk1cxz0c3qtjz2xmv6woutqv",
+            "0zo6py3ukypw872vvy3nonn9m5k8sppr",
+            "102hm26sqrvj8kthbu7coq7zv51logd3",
+            "1ourdw7la8vu2zk51s7q8f34x4duhc0u"
+          ]
+        },
+        {
+          "name": "customer_unique_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 100,
+          "total_count": 100,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "7uyt08so9ldomss6r2u6p6c991scxgaj",
+            "eevonrqpfd9qbceksz4ll5lo1n6q3h7a",
+            "k5w156j7agfpodm32hddr8px5lbtcpg3",
+            "q8tc5vc2mtqxejqji25uay7nv6dsfryh",
+            "m5zyz53j9vk0p8q6iind27gzzmjwdmwh"
+          ]
+        },
+        {
+          "name": "customer_zip_code",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Postal/ZIP code",
+          "null_count": 0,
+          "unique_count": 100,
+          "total_count": 100,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "22981",
+            "66608",
+            "47529",
+            "87706",
+            "93946"
+          ]
+        },
+        {
+          "name": "customer_city",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "City name for geographic location",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 100,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Salvador",
+            "Rio de Janeiro",
+            "Belo Horizonte",
+            "São Paulo",
+            "Brasília"
+          ]
+        },
+        {
+          "name": "customer_state",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "State or province",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 100,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "MG",
+            "RJ",
+            "DF",
+            "BA",
+            "SP"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sellers",
+      "row_count": 30,
+      "table_type": "dimension",
+      "business_description": "Seller/vendor information in the marketplace",
+      "primary_keys": [
+        "seller_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_sellers_1"
+      ],
+      "columns": [
+        {
+          "name": "seller_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 30,
+          "total_count": 30,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "1k5y5qhnt64zcodqz32h9qzguvpdz908",
+            "27hdtxdohdbydnwrtb9xlybmavukdrl8",
+            "3g9mvet13de2x107ynsubgfibh4se076",
+            "5lgo5ruljj5cu8xj3cvqmc3tnwj5qt9b",
+            "5x94qv2djfgmhkxk9e0wlsmu3ycx34o4"
+          ]
+        },
+        {
+          "name": "seller_zip_code",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Postal/ZIP code",
+          "null_count": 0,
+          "unique_count": 30,
+          "total_count": 30,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "40480",
+            "88997",
+            "94978",
+            "18123",
+            "44879"
+          ]
+        },
+        {
+          "name": "seller_city",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "City name for geographic location",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 30,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Brasília",
+            "Rio de Janeiro",
+            "São Paulo",
+            "Salvador",
+            "Belo Horizonte"
+          ]
+        },
+        {
+          "name": "seller_state",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "State or province",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 30,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "BA",
+            "DF",
+            "MG",
+            "RJ",
+            "SP"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "row_count": 50,
+      "table_type": "dimension",
+      "business_description": "Product catalog with descriptions, categories, and specifications",
+      "primary_keys": [
+        "product_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_products_1"
+      ],
+      "columns": [
+        {
+          "name": "product_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "048fvld0r81vx76tkkxivxwiuxt1chzf",
+            "1lzv7oi5d8p12gunu7qsjezeeshyvk5b",
+            "2a718y11upeeev8138cyxoit90gwtc7o",
+            "44xhvxuvu95burtyq8t9dour4lqvgx5z",
+            "4dvzmq4ai2egczf6wrf7xa8n6wfbi4m6"
+          ]
+        },
+        {
+          "name": "product_category_name",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "name",
+          "business_description": "Display name or label",
+          "null_count": 0,
+          "unique_count": 7,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "furniture",
+            "toys",
+            "beauty",
+            "books",
+            "clothing"
+          ]
+        },
+        {
+          "name": "product_name_length",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "unknown",
+          "business_description": "Display name or label",
+          "null_count": 0,
+          "unique_count": 29,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            42,
+            16,
+            14,
+            17,
+            31
+          ]
+        },
+        {
+          "name": "product_description_length",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "description",
+          "business_description": "Detailed description text",
+          "null_count": 0,
+          "unique_count": 47,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            319,
+            113,
+            447,
+            403,
+            263
+          ]
+        },
+        {
+          "name": "product_photos_qty",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "quantity",
+          "business_description": "Count or quantity value",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            1,
+            4,
+            5,
+            3,
+            2
+          ]
+        },
+        {
+          "name": "product_weight_g",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "score",
+          "business_description": "Weight measurement or priority",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            591.3091793653925,
+            4666.97604552382,
+            3873.2953928458273,
+            3872.162887944638,
+            1197.0240471194886
+          ]
+        },
+        {
+          "name": "product_length_cm",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "unknown",
+          "business_description": "Data field of type REAL",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            94.1879804510174,
+            68.36381388310599,
+            22.687360836998472,
+            48.61514264694707,
+            93.88615943066385
+          ]
+        },
+        {
+          "name": "product_height_cm",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "unknown",
+          "business_description": "Data field of type REAL",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            9.723664172868276,
+            29.319094269398107,
+            46.98735503694179,
+            39.03800988942552,
+            33.52262435843668
+          ]
+        },
+        {
+          "name": "product_width_cm",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "unknown",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            12.26807040984269,
+            34.20663178614075,
+            33.739683522221114,
+            23.072268845432113,
+            6.533871912834828
+          ]
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "row_count": 200,
+      "table_type": "fact",
+      "business_description": "Contains order transactions with references to customers and order details",
+      "primary_keys": [
+        "order_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_orders_1"
+      ],
+      "columns": [
+        {
+          "name": "order_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 200,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "0ei4ws1gzx2en7za6hguxbifd1qxzvzz",
+            "0ewsi7zl6fnihs4opwsawnwxthu4jzrq",
+            "0h990lep5thls4crcci7cjrs8ra19nts",
+            "0hio9amdn0fe4kip97lsoodhu0y8m3vj",
+            "0km8hcylvdd27ihxfrc4t8moplqfbry9"
+          ]
+        },
+        {
+          "name": "customer_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "references": "customers.customer_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 88,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "wgfe1bru9whr3sz1hfh95fbem946fm2f",
+            "mnmrywwcb2vw11nol6h3w9b7o3rck0wv",
+            "8bualv39l7vsgn25aukvsqnexu108r7h",
+            "bg2v3dsn2n6ggj0uketbw9ajymwp3cu1",
+            "2pojfxw5yvd2vicnfg6oqb3iy5fgvevv"
+          ]
+        },
+        {
+          "name": "order_status",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "status",
+          "business_description": "Current status or state",
+          "null_count": 0,
+          "unique_count": 4,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "delivered",
+            "shipped",
+            "canceled",
+            "processing"
+          ]
+        },
+        {
+          "name": "order_purchase_timestamp",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date/time value for temporal tracking",
+          "null_count": 0,
+          "unique_count": 140,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-08-19",
+            "2024-10-17",
+            "2024-02-21",
+            "2024-12-21",
+            "2024-05-12"
+          ]
+        },
+        {
+          "name": "order_approved_at",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date/time value for temporal tracking",
+          "null_count": 0,
+          "unique_count": 151,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-04-06",
+            "2024-02-28",
+            "2024-05-07",
+            "2024-06-13",
+            "2024-07-15"
+          ]
+        },
+        {
+          "name": "order_delivered_carrier_date",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date of the event or record",
+          "null_count": 0,
+          "unique_count": 154,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-06-15",
+            "2024-06-02",
+            "2024-12-27",
+            "2024-07-22",
+            "2024-08-23"
+          ]
+        },
+        {
+          "name": "order_delivered_customer_date",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date of the event or record",
+          "null_count": 0,
+          "unique_count": 149,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-03-22",
+            "2024-04-25",
+            "2024-01-10",
+            "2024-09-18",
+            "2024-05-15"
+          ]
+        },
+        {
+          "name": "order_estimated_delivery_date",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date of the event or record",
+          "null_count": 0,
+          "unique_count": 145,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-06-19",
+            "2024-08-19",
+            "2024-01-27",
+            "2024-11-10",
+            "2024-11-15"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "order_items",
+      "row_count": 388,
+      "table_type": "fact",
+      "business_description": "Contains order transactions with references to customers and order details",
+      "primary_keys": [
+        "order_id",
+        "order_item_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_order_items_1"
+      ],
+      "columns": [
+        {
+          "name": "order_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": true,
+          "references": "orders.order_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 200,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "0ei4ws1gzx2en7za6hguxbifd1qxzvzz",
+            "0ewsi7zl6fnihs4opwsawnwxthu4jzrq",
+            "0h990lep5thls4crcci7cjrs8ra19nts",
+            "0hio9amdn0fe4kip97lsoodhu0y8m3vj",
+            "0km8hcylvdd27ihxfrc4t8moplqfbry9"
+          ]
+        },
+        {
+          "name": "order_item_id",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 3,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "name": "product_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "references": "products.product_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "c4idrxf9obp0w7ul5rriq1hmaaijjbsy",
+            "t3ibznk4nf7zewzi79rohheow64dz2n1",
+            "f2gscrkviu05567z6vfzrs9mjt378wxo",
+            "2a718y11upeeev8138cyxoit90gwtc7o",
+            "gyglh7h5l8vybun5xwe9139xb1pbvim6"
+          ]
+        },
+        {
+          "name": "seller_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "references": "sellers.seller_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 30,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "n3v9hgsrywmhq7x45702glzp5xq5bcbv",
+            "ujq22bo7bhbr0gs30dvz2vlplbi1rzri",
+            "5x94qv2djfgmhkxk9e0wlsmu3ycx34o4",
+            "jdvh41ga1wq0gjbuqoef8laa6bvk3yhe",
+            "xyzm1jistobysm5q0wb7iqsc18qjr2l8"
+          ]
+        },
+        {
+          "name": "shipping_limit_date",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date of the event or record",
+          "null_count": 0,
+          "unique_count": 226,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-01-17",
+            "2024-07-02",
+            "2024-02-03",
+            "2024-06-28",
+            "2024-04-19"
+          ]
+        },
+        {
+          "name": "price",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Monetary price value",
+          "null_count": 0,
+          "unique_count": 387,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            379.1,
+            164.9,
+            259.3,
+            241.87,
+            145.7
+          ]
+        },
+        {
+          "name": "freight_value",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Monetary or numeric amount",
+          "null_count": 0,
+          "unique_count": 371,
+          "total_count": 388,
+          "null_percentage": 0.0,
+          "sample_values": [
+            40.97,
+            46.88,
+            49.65,
+            31.6,
+            19.99
+          ]
+        }
+      ]
+    },
+    {
+      "name": "order_payments",
+      "row_count": 200,
+      "table_type": "fact",
+      "business_description": "Contains order transactions with references to customers and order details",
+      "primary_keys": [
+        "order_id",
+        "payment_sequential"
+      ],
+      "indexes": [
+        "sqlite_autoindex_order_payments_1"
+      ],
+      "columns": [
+        {
+          "name": "order_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": true,
+          "references": "orders.order_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 200,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "0ei4ws1gzx2en7za6hguxbifd1qxzvzz",
+            "0ewsi7zl6fnihs4opwsawnwxthu4jzrq",
+            "0h990lep5thls4crcci7cjrs8ra19nts",
+            "0hio9amdn0fe4kip97lsoodhu0y8m3vj",
+            "0km8hcylvdd27ihxfrc4t8moplqfbry9"
+          ]
+        },
+        {
+          "name": "payment_sequential",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Monetary or numeric amount",
+          "null_count": 0,
+          "unique_count": 1,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            1
+          ]
+        },
+        {
+          "name": "payment_type",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Type or classification",
+          "null_count": 0,
+          "unique_count": 4,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "voucher",
+            "boleto",
+            "credit_card",
+            "debit_card"
+          ]
+        },
+        {
+          "name": "payment_installments",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Monetary or numeric amount",
+          "null_count": 0,
+          "unique_count": 12,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            6,
+            7,
+            2,
+            1,
+            4
+          ]
+        },
+        {
+          "name": "payment_value",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "amount",
+          "business_description": "Monetary or numeric amount",
+          "null_count": 0,
+          "unique_count": 200,
+          "total_count": 200,
+          "null_percentage": 0.0,
+          "sample_values": [
+            391.97,
+            722.34,
+            584.68,
+            822.62,
+            306.66
+          ]
+        }
+      ]
+    },
+    {
+      "name": "order_reviews",
+      "row_count": 148,
+      "table_type": "fact",
+      "business_description": "Contains order transactions with references to customers and order details",
+      "primary_keys": [
+        "review_id"
+      ],
+      "indexes": [
+        "sqlite_autoindex_order_reviews_1"
+      ],
+      "columns": [
+        {
+          "name": "review_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 148,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "0c7niqgcli7snpws31q4v2imst8shkkf",
+            "0mzo0fok89ddul1u4afe0xgqf87u3yq3",
+            "0sp7u9nfpa5oy8xbql7dapapsuv5gwtu",
+            "12ifq8voowrf5unjcxmqyehvoglshm1r",
+            "1d7ksvo5vdj22ig785bsbhbq6acon2dm"
+          ]
+        },
+        {
+          "name": "order_id",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "references": "orders.order_id",
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 148,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "94l33857q6p52q86l5gdkffs51n1t6ce",
+            "u7gp7gffox13iuqw4x6oael0jsxmuxu2",
+            "4igzgemsxt2zin4s4fe2wc66o5fznf08",
+            "2j3hi1b8l85pfq9emunp5pmn4t350gkn",
+            "8qx3n61u1d82xa5q9y4pp7t2fudc53pn"
+          ]
+        },
+        {
+          "name": "review_score",
+          "data_type": "INTEGER",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "score",
+          "business_description": "Numerical score or rating",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            5,
+            3,
+            1,
+            4,
+            2
+          ]
+        },
+        {
+          "name": "review_comment_title",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "name",
+          "business_description": "Name or label for display purposes",
+          "null_count": 0,
+          "unique_count": 1,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            ""
+          ]
+        },
+        {
+          "name": "review_comment_message",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "description",
+          "business_description": "Free-text description or notes",
+          "null_count": 0,
+          "unique_count": 1,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            ""
+          ]
+        },
+        {
+          "name": "review_creation_date",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date of the event or record",
+          "null_count": 0,
+          "unique_count": 118,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-09-20",
+            "2024-01-25",
+            "2024-06-25",
+            "2024-07-14",
+            "2024-08-06"
+          ]
+        },
+        {
+          "name": "review_answer_timestamp",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "date",
+          "business_description": "Date/time value for temporal tracking",
+          "null_count": 0,
+          "unique_count": 122,
+          "total_count": 148,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "2024-02-01",
+            "2024-09-12",
+            "2024-12-21",
+            "2024-10-19",
+            "2024-08-19"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "geolocation",
+      "row_count": 50,
+      "table_type": "dimension",
+      "business_description": "Geographic location data with coordinates",
+      "primary_keys": [],
+      "indexes": [],
+      "columns": [
+        {
+          "name": "geolocation_zip_code",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Postal/ZIP code",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "93714",
+            "27881",
+            "53553",
+            "27779",
+            "70955"
+          ]
+        },
+        {
+          "name": "geolocation_lat",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "coordinate",
+          "business_description": "Geographic coordinate value",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            -23.436445,
+            -23.229317,
+            -22.874924,
+            -22.562507,
+            -23.22069
+          ]
+        },
+        {
+          "name": "geolocation_lng",
+          "data_type": "REAL",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "coordinate",
+          "business_description": "Geographic coordinate value",
+          "null_count": 0,
+          "unique_count": 50,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            -46.468456,
+            -44.877976,
+            -44.663979,
+            -45.367615,
+            -43.79191
+          ]
+        },
+        {
+          "name": "geolocation_city",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "City name for geographic location",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Brasília",
+            "Salvador",
+            "Rio de Janeiro",
+            "Belo Horizonte",
+            "São Paulo"
+          ]
+        },
+        {
+          "name": "geolocation_state",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "State or province",
+          "null_count": 0,
+          "unique_count": 5,
+          "total_count": 50,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "RJ",
+            "MG",
+            "DF",
+            "BA",
+            "SP"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "product_category",
+      "row_count": 7,
+      "table_type": "dimension",
+      "business_description": "Product catalog with descriptions, categories, and specifications",
+      "primary_keys": [
+        "product_category_name"
+      ],
+      "indexes": [
+        "sqlite_autoindex_product_category_1"
+      ],
+      "columns": [
+        {
+          "name": "product_category_name",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "name",
+          "business_description": "Display name or label",
+          "null_count": 0,
+          "unique_count": 7,
+          "total_count": 7,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "beauty",
+            "books",
+            "clothing",
+            "electronics",
+            "furniture"
+          ]
+        },
+        {
+          "name": "product_category_name_english",
+          "data_type": "TEXT",
+          "nullable": true,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "category",
+          "business_description": "Display name or label",
+          "null_count": 0,
+          "unique_count": 7,
+          "total_count": 7,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Electronics",
+            "Furniture",
+            "Clothing",
+            "Sports",
+            "Books"
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from_table": "orders",
+      "from_column": "customer_id",
+      "to_table": "customers",
+      "to_column": "customer_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    },
+    {
+      "from_table": "order_items",
+      "from_column": "seller_id",
+      "to_table": "sellers",
+      "to_column": "seller_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    },
+    {
+      "from_table": "order_items",
+      "from_column": "product_id",
+      "to_table": "products",
+      "to_column": "product_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    },
+    {
+      "from_table": "order_items",
+      "from_column": "order_id",
+      "to_table": "orders",
+      "to_column": "order_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    },
+    {
+      "from_table": "order_payments",
+      "from_column": "order_id",
+      "to_table": "orders",
+      "to_column": "order_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    },
+    {
+      "from_table": "order_reviews",
+      "from_column": "order_id",
+      "to_table": "orders",
+      "to_column": "order_id",
+      "relationship_type": "many-to-one",
+      "is_explicit": true
+    }
+  ],
+  "quality_issues": [
+    {
+      "table": "orders",
+      "column": "customer_id",
+      "issue_type": "low_cardinality",
+      "severity": "medium",
+      "description": "Identifier column has only 88 unique values",
+      "recommendation": "Verify if this column should be a unique identifier"
+    },
+    {
+      "table": "order_items",
+      "column": "order_item_id",
+      "issue_type": "low_cardinality",
+      "severity": "medium",
+      "description": "Identifier column has only 3 unique values",
+      "recommendation": "Verify if this column should be a unique identifier"
+    },
+    {
+      "table": "order_items",
+      "column": "product_id",
+      "issue_type": "low_cardinality",
+      "severity": "medium",
+      "description": "Identifier column has only 50 unique values",
+      "recommendation": "Verify if this column should be a unique identifier"
+    },
+    {
+      "table": "order_items",
+      "column": "seller_id",
+      "issue_type": "low_cardinality",
+      "severity": "medium",
+      "description": "Identifier column has only 30 unique values",
+      "recommendation": "Verify if this column should be a unique identifier"
+    }
+  ],
+  "sample_queries": [
+    {
+      "title": "View customers data",
+      "description": "Retrieve sample records from customers",
+      "sql": "SELECT * FROM customers LIMIT 10;"
+    },
+    {
+      "title": "View sellers data",
+      "description": "Retrieve sample records from sellers",
+      "sql": "SELECT * FROM sellers LIMIT 10;"
+    },
+    {
+      "title": "View products data",
+      "description": "Retrieve sample records from products",
+      "sql": "SELECT * FROM products LIMIT 10;"
+    },
+    {
+      "title": "Join orders with customers",
+      "description": "Combine data from related tables",
+      "sql": "SELECT a.*, b.*\nFROM orders a\nJOIN customers b ON a.customer_id = b.customer_id\nLIMIT 10;"
+    },
+    {
+      "title": "Join order_items with sellers",
+      "description": "Combine data from related tables",
+      "sql": "SELECT a.*, b.*\nFROM order_items a\nJOIN sellers b ON a.seller_id = b.seller_id\nLIMIT 10;"
+    },
+    {
+      "title": "Join order_items with products",
+      "description": "Combine data from related tables",
+      "sql": "SELECT a.*, b.*\nFROM order_items a\nJOIN products b ON a.product_id = b.product_id\nLIMIT 10;"
+    },
+    {
+      "title": "Aggregate order_items",
+      "description": "Summary statistics for order_items",
+      "sql": "SELECT \n    COUNT(*) as total_records,\n    SUM(price) as total_amount,\n    AVG(price) as avg_amount\nFROM order_items;"
+    }
+  ]
+}

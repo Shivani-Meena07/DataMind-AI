@@ -1,0 +1,108 @@
+{
+  "database_name": "netflix_titles",
+  "tables": [
+    {
+      "name": "netflix_titles",
+      "type": "dimension",
+      "columns": [
+        {
+          "name": "show_id",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "type",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "title",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "director",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "cast",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "country",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "date_added",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "release_year",
+          "data_type": "INTEGER",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "rating",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "duration",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "listed_in",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "description",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-02-20T21:23:34.229216",
+  "datasets": {
+    "a5ace9556eab50f7d8d256ee5a3835d04797f794b8a07cdd9c50b4d031078309": {
+      "original_filename": "netflix_titles.csv",
+      "created_at": "2026-02-20T21:27:02.087259",
+      "analysis_status": "completed",
+      "file_type": "csv"
+    },
+    "9215d57bf75caebf96b4a092b035caa000956419be14aef60285b9f89b167a00": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T09:18:27.212088",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "28bcdcd9e5521b105face38b0eb428f77148d28db125558ea27746161443d999": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T09:18:42.393926",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "728b9141c1587112d199df68df5b37cd9eae403cd1cd1502c55b30867bcb484e": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T09:54:08.601476",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "d89c8156dc46f22b70f24b1f1c2fa672d1130c99ae57c3a52619807226773521": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:25:33.729897",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "07f00c80cbc516ff28a5a82e99cdf792294c9cc271f2b502c4bdfc0cbb0a25c4": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:27:17.071844",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "19d6274207b10cf061a64c5c7b9017a3e64bf0703c93b4605b1c7fabbdc1c94e": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:30:14.718112",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "22db2c1f25c0705f2cc575a4c05a0fc02ec3be1ef5c6ff307d166bde28367338": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:44:59.686650",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "a285f8bbdbe2959ff6bd2473669b391d28ffc94f7b78857be7a5b18f17e56a1d": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:45:21.487387",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "562c6a608cba76193f91bb059fd63cedc516dd7cf5a2f3f274f01998b38bcff2": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T12:58:28.514985",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "3e1b9f8771a66256ad790f9e98a5af98cdea77ebb467e0a9f9e11b18ac323c29": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T13:00:05.874955",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    },
+    "3abcf78fd1121c110543f9bce3abf413597aac6bdf1508119cb3ad3f601467b8": {
+      "original_filename": "demo_ecommerce.db",
+      "created_at": "2026-02-21T13:04:51.522575",
+      "analysis_status": "completed",
+      "file_type": "sqlite"
+    }
+  },
+  "stats": {
+    "total_datasets": 12,
+    "total_analyses": 12,
+    "cache_hits": 1
+  }
+}

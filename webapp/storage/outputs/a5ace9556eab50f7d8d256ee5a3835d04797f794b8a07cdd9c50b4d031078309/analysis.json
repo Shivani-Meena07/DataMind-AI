@@ -1,0 +1,286 @@
+{
+  "database_name": "netflix_titles",
+  "file_type": "CSV",
+  "analysis_date": "2026-02-20T21:27:02.223936",
+  "summary": {
+    "total_tables": 1,
+    "total_columns": 12,
+    "total_rows": 8807,
+    "total_relationships": 0,
+    "quality_issues": 0,
+    "quality_score": 100
+  },
+  "tables": [
+    {
+      "name": "netflix_titles",
+      "row_count": 8807,
+      "table_type": "dimension",
+      "business_description": "Master data table containing reference information with columns: show_id, type, title, director, cast",
+      "primary_keys": [],
+      "indexes": [],
+      "columns": [
+        {
+          "name": "show_id",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "identifier",
+          "business_description": "Unique identifier for the record",
+          "null_count": 0,
+          "unique_count": 8807,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "s1",
+            "s2",
+            "s3",
+            "s4",
+            "s5"
+          ]
+        },
+        {
+          "name": "type",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "category",
+          "business_description": "Type or classification",
+          "null_count": 0,
+          "unique_count": 2,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Movie",
+            "TV Show",
+            "TV Show",
+            "TV Show",
+            "TV Show"
+          ]
+        },
+        {
+          "name": "title",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "text",
+          "business_description": "Data field of type TEXT",
+          "null_count": 0,
+          "unique_count": 8807,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Dick Johnson Is Dead",
+            "Blood & Water",
+            "Ganglands",
+            "Jailbirds New Orleans",
+            "Kota Factory"
+          ]
+        },
+        {
+          "name": "director",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "text",
+          "business_description": "Data field of type TEXT",
+          "null_count": 2634,
+          "unique_count": 4528,
+          "total_count": 8807,
+          "null_percentage": 29.9,
+          "sample_values": [
+            "Kirsten Johnson",
+            "Julien Leclercq",
+            "Mike Flanagan",
+            "Robert Cullen, José Luis Ucha",
+            "Haile Gerima"
+          ]
+        },
+        {
+          "name": "cast",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "text",
+          "business_description": "Data field of type TEXT",
+          "null_count": 825,
+          "unique_count": 7692,
+          "total_count": 8807,
+          "null_percentage": 9.4,
+          "sample_values": [
+            "Ama Qamata, Khosi Ngema, Gail Mabalane, Thabang Molaba, Dillon Windvogel, Natasha Thahane, Arno Greeff, Xolile Tshabalala, Getmore Sithole, Cindy Mahlangu, Ryle De Morny, Greteli Fincham, Sello Maake Ka-Ncube, Odwa Gwanya, Mekaila Mathys, Sandi Schultz, Duane Williams, Shamilla Miller, Patrick Mofokeng",
+            "Sami Bouajila, Tracy Gotoas, Samuel Jouy, Nabiha Akkari, Sofia Lesaffre, Salim Kechiouche, Noureddine Farihi, Geert Van Rampelberg, Bakary Diombera",
+            "Mayur More, Jitendra Kumar, Ranjan Raj, Alam Khan, Ahsaas Channa, Revathi Pillai, Urvi Singh, Arun Kumar",
+            "Kate Siegel, Zach Gilford, Hamish Linklater, Henry Thomas, Kristin Lehman, Samantha Sloyan, Igby Rigney, Rahul Kohli, Annarah Cymone, Annabeth Gish, Alex Essoe, Rahul Abburi, Matt Biedel, Michael Trucco, Crystal Balint, Louis Oliver",
+            "Vanessa Hudgens, Kimiko Glenn, James Marsden, Sofia Carson, Liza Koshy, Ken Jeong, Elizabeth Perkins, Jane Krakowski, Michael McKean, Phil LaMarr"
+          ]
+        },
+        {
+          "name": "country",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "address",
+          "business_description": "Country name or code",
+          "null_count": 831,
+          "unique_count": 748,
+          "total_count": 8807,
+          "null_percentage": 9.4,
+          "sample_values": [
+            "United States",
+            "South Africa",
+            "India",
+            "United States, Ghana, Burkina Faso, United Kingdom, Germany, Ethiopia",
+            "United Kingdom"
+          ]
+        },
+        {
+          "name": "date_added",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "text",
+          "business_description": "Date of the event or record",
+          "null_count": 10,
+          "unique_count": 1767,
+          "total_count": 8807,
+          "null_percentage": 0.1,
+          "sample_values": [
+            "September 25, 2021",
+            "September 24, 2021",
+            "September 24, 2021",
+            "September 24, 2021",
+            "September 24, 2021"
+          ]
+        },
+        {
+          "name": "release_year",
+          "data_type": "INTEGER",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "unknown",
+          "business_description": "Data field of type INTEGER",
+          "null_count": 0,
+          "unique_count": 74,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            2020,
+            2021,
+            2021,
+            2021,
+            2021
+          ]
+        },
+        {
+          "name": "rating",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "score",
+          "business_description": "Numeric score, rating, or rank",
+          "null_count": 4,
+          "unique_count": 17,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "PG-13",
+            "TV-MA",
+            "TV-MA",
+            "TV-MA",
+            "TV-MA"
+          ]
+        },
+        {
+          "name": "duration",
+          "data_type": "TEXT",
+          "nullable": "True",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "percentage",
+          "business_description": "Percentage or ratio value",
+          "null_count": 3,
+          "unique_count": 220,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "90 min",
+            "2 Seasons",
+            "1 Season",
+            "1 Season",
+            "2 Seasons"
+          ]
+        },
+        {
+          "name": "listed_in",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "text",
+          "business_description": "Data field of type TEXT",
+          "null_count": 0,
+          "unique_count": 514,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "Documentaries",
+            "International TV Shows, TV Dramas, TV Mysteries",
+            "Crime TV Shows, International TV Shows, TV Action & Adventure",
+            "Docuseries, Reality TV",
+            "International TV Shows, Romantic TV Shows, TV Comedies"
+          ]
+        },
+        {
+          "name": "description",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "semantic_type": "description",
+          "business_description": "Detailed description text",
+          "null_count": 0,
+          "unique_count": 8775,
+          "total_count": 8807,
+          "null_percentage": 0.0,
+          "sample_values": [
+            "As her father nears the end of his life, filmmaker Kirsten Johnson stages his death in inventive and comical ways to help them both face the inevitable.",
+            "After crossing paths at a party, a Cape Town teen sets out to prove whether a private-school swimming star is her sister who was abducted at birth.",
+            "To protect his family from a powerful drug lord, skilled thief Mehdi and his expert team of robbers are pulled into a violent and deadly turf war.",
+            "Feuds, flirtations and toilet talk go down among the incarcerated women at the Orleans Justice Center in New Orleans on this gritty reality series.",
+            "In a city of coaching centers known to train India’s finest collegiate minds, an earnest but unexceptional student and his friends navigate campus life."
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "quality_issues": [],
+  "sample_queries": [
+    {
+      "title": "View netflix_titles data",
+      "description": "Retrieve sample records from netflix_titles",
+      "sql": "SELECT * FROM \"netflix_titles\" LIMIT 10;"
+    }
+  ]
+}

@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI - Database Documentation Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .logo i {
+            color: var(--primary);
+            font-size: 1.75rem;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        .header-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+        }
+
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .feature i {
+            color: var(--success);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+            border: 1px solid var(--gray-100);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: 0.75rem;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: var(--gray-50);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--gray-400);
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover i {
+            color: var(--primary);
+        }
+
+        .upload-area h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area p {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status.show {
+            display: flex;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.info {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-left: 1rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-100);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .stat-card .icon.blue {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .stat-card .icon.green {
+            background: #d1fae5;
+            color: var(--success);
+        }
+
+        .stat-card .icon.yellow {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+        .stat-card .icon.purple {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-card .label {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--gray-100);
+            padding: 0.375rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            color: var(--gray-600);
+        }
+
+        .tab:hover {
+            color: var(--gray-900);
+        }
+
+        .tab.active {
+            background: white;
+            color: var(--gray-900);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-header h3 i {
+            color: var(--primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-600);
+        }
+
+        td {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-blue {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .badge-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-purple {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .badge-gray {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-100);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .table-card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .table-card-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .table-meta span {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .table-meta span i {
+            font-size: 0.75rem;
+        }
+
+        .table-description {
+            padding: 1rem 1.5rem;
+            background: white;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--gray-900);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-top: 0.75rem;
+        }
+
+        .code-block code {
+            color: #e5e7eb;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+        }
+
+        .code-block .keyword {
+            color: #93c5fd;
+        }
+
+        .code-block .function {
+            color: #fbbf24;
+        }
+
+        .code-block .string {
+            color: #86efac;
+        }
+
+        /* Quality Score */
+        .quality-score {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .score-circle.high {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .score-circle.medium {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .score-circle.low {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .score-details h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-details p {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        /* Markdown Preview */
+        .markdown-preview {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .markdown-preview h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .markdown-preview h2 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .markdown-preview h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        .markdown-preview p {
+            margin-bottom: 1rem;
+            color: var(--gray-600);
+        }
+
+        .markdown-preview table {
+            margin: 1rem 0;
+        }
+
+        .markdown-preview code {
+            background: var(--gray-100);
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+
+        .markdown-preview pre {
+            background: var(--gray-900);
+            color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .markdown-preview pre code {
+            background: transparent;
+            color: #e5e7eb;
+            padding: 0;
+        }
+
+        /* Relationship Diagram */
+        .relationship-diagram {
+            background: var(--gray-50);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .relationship-diagram pre {
+            display: inline-block;
+            text-align: left;
+        }
+
+        /* Export Buttons */
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .upload-area {
+                padding: 2rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-database"></i>
+                <div class="logo-text">Data<span>Mind</span> AI</div>
+            </div>
+            <div class="header-badge">No API Key Required</div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Generate <span>Beautiful Data Documentation</span> Instantly</h1>
+            <p>Upload any data file and let our AI analyze schema, relationships, and data quality to create comprehensive documentation — all without any API keys.</p>
+            
+            <!-- Supported File Types -->
+            <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                <span style="background: #dbeafe; color: #1d4ed8; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500;">
+                    <i class="fas fa-database"></i> SQLite
+                </span>
+                <span style="background: #d1fae5; color: #065f46; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500;">
+                    <i class="fas fa-file-csv"></i> CSV
+                </span>
+                <span style="background: #dcfce7; color: #166534; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500;">
+                    <i class="fas fa-file-excel"></i> Excel
+                </span>
+                <span style="background: #fef3c7; color: #92400e; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 500;">
+                    <i class="fas fa-file-code"></i> JSON
+                </span>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Schema Analysis</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Relationship Mapping</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Data Quality Report</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Sample Queries</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Section -->
+        <section class="upload-section" id="uploadSection">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".db,.sqlite,.sqlite3,.csv,.tsv,.txt,.xlsx,.xls,.xlsm,.json">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Drop your data file here</h3>
+                <p>or click to browse • Supports SQLite, CSV, Excel, JSON</p>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" id="analyzeBtn" disabled>
+                    <i class="fas fa-magic"></i>
+                    Analyze Database
+                </button>
+                <button class="btn btn-secondary" id="demoBtn">
+                    <i class="fas fa-play-circle"></i>
+                    Try Demo Database
+                </button>
+            </div>
+
+            <div class="status" id="statusMessage">
+                <i class="fas fa-info-circle"></i>
+                <span id="statusText"></span>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingSection">
+            <div class="spinner"></div>
+            <span class="loading-text">Analyzing your database...</span>
+        </div>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection">
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="tabsContainer">
+                <button class="tab active" data-tab="overview">
+                    <i class="fas fa-chart-pie"></i> Overview
+                </button>
+                <button class="tab" data-tab="tables">
+                    <i class="fas fa-table"></i> Tables
+                </button>
+                <button class="tab" data-tab="relationships">
+                    <i class="fas fa-project-diagram"></i> Relationships
+                </button>
+                <button class="tab" data-tab="quality">
+                    <i class="fas fa-shield-alt"></i> Quality
+                </button>
+                <button class="tab" data-tab="queries">
+                    <i class="fas fa-code"></i> Queries
+                </button>
+                <button class="tab" data-tab="export">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tabContents"></div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Built with ❤️ by DataMind AI • <a href="#">GitHub</a> • No data leaves your browser</p>
+    </footer>
+
+    <script>
+        // State
+        let analysisResults = null;
+        let uploadedFile = null;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const demoBtn = document.getElementById('demoBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusText = document.getElementById('statusText');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const statsGrid = document.getElementById('statsGrid');
+        const tabsContainer = document.getElementById('tabsContainer');
+        const tabContents = document.getElementById('tabContents');
+
+        // Event Listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFileSelect(file);
+        });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFileSelect(file);
+        });
+        analyzeBtn.addEventListener('click', analyzeDatabase);
+        demoBtn.addEventListener('click', useDemoDatabase);
+
+        // Tab switching
+        tabsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                showTab(e.target.dataset.tab);
+            }
+        });
+
+        // Functions
+        function handleFileSelect(file) {
+            const validExtensions = ['.db', '.sqlite', '.sqlite3', '.csv', '.tsv', '.txt', '.xlsx', '.xls', '.xlsm', '.json'];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!validExtensions.includes(ext)) {
+                showStatus('Unsupported file type. Please upload SQLite, CSV, Excel, or JSON.', 'error');
+                return;
+            }
+
+            // File type icons
+            const fileTypes = {
+                '.db': '🗄️ SQLite', '.sqlite': '🗄️ SQLite', '.sqlite3': '🗄️ SQLite',
+                '.csv': '📊 CSV', '.tsv': '📊 TSV', '.txt': '📄 Text',
+                '.xlsx': '📗 Excel', '.xls': '📗 Excel', '.xlsm': '📗 Excel',
+                '.json': '📋 JSON'
+            };
+            
+            const fileType = fileTypes[ext] || 'File';
+
+            uploadedFile = file;
+            analyzeBtn.disabled = false;
+            showStatus(`Selected: ${file.name} (${formatBytes(file.size)}) - ${fileType}`, 'success');
+        }
+
+        async function uploadFile() {
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Server returned non-JSON response:', text);
+                throw new Error('Server error. Please make sure the server is running.');
+            }
+
+            return response.json();
+        }
+
+        async function analyzeDatabase() {
+            if (!uploadedFile) {
+                showStatus('Please select a file first', 'error');
+                return;
+            }
+
+            showLoading(true);
+            hideStatus();
+
+            try {
+                // Upload file
+                const uploadResult = await uploadFile();
+                if (uploadResult.error) throw new Error(uploadResult.error);
+                
+                showStatus('File uploaded. Analyzing...', 'info');
+
+                // Analyze
+                const response = await fetch('/api/analyze', { method: 'POST' });
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Analysis returned non-JSON:', text);
+                    throw new Error('Analysis failed. Please try again.');
+                }
+                
+                const results = await response.json();
+                
+                if (results.error) throw new Error(results.error);
+
+                analysisResults = results;
+                renderResults();
+                showLoading(false);
+                resultsSection.classList.add('show');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                showLoading(false);
+                showStatus('Error: ' + error.message, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function useDemoDatabase() {
+            showLoading(true);
+            hideStatus();
+
+            try {
+                // Create demo database
+                const demoResponse = await fetch('/api/demo', { method: 'POST' });
+                const demoResult = await demoResponse.json();
+                if (demoResult.error) throw new Error(demoResult.error);
+
+                // Analyze
+                const response = await fetch('/api/analyze', { method: 'POST' });
+                const results = await response.json();
+                
+                if (results.error) throw new Error(results.error);
+
+                analysisResults = results;
+                renderResults();
+                showLoading(false);
+                resultsSection.classList.add('show');
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                showLoading(false);
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        function renderResults() {
+            renderStats();
+            renderTabs();
+            showTab('overview');
+        }
+
+        function renderStats() {
+            const summary = analysisResults.summary;
+            statsGrid.innerHTML = `
+                <div class="stat-card fade-in">
+                    <div class="icon blue"><i class="fas fa-table"></i></div>
+                    <div class="value">${summary.total_tables}</div>
+                    <div class="label">Tables</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="icon purple"><i class="fas fa-columns"></i></div>
+                    <div class="value">${summary.total_columns}</div>
+                    <div class="label">Columns</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="icon green"><i class="fas fa-database"></i></div>
+                    <div class="value">${formatNumber(summary.total_rows)}</div>
+                    <div class="label">Rows</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="icon yellow"><i class="fas fa-project-diagram"></i></div>
+                    <div class="value">${summary.total_relationships}</div>
+                    <div class="label">Relationships</div>
+                </div>
+            `;
+        }
+
+        function renderTabs() {
+            // All tab content will be rendered on demand
+        }
+
+        function showTab(tabId) {
+            const content = generateTabContent(tabId);
+            tabContents.innerHTML = content;
+            
+            // Re-attach event listeners for copy buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const code = e.target.closest('.code-block').querySelector('code').textContent;
+                    navigator.clipboard.writeText(code);
+                    e.target.textContent = 'Copied!';
+                    setTimeout(() => e.target.textContent = 'Copy', 2000);
+                });
+            });
+        }
+
+        function generateTabContent(tabId) {
+            switch(tabId) {
+                case 'overview': return generateOverviewTab();
+                case 'tables': return generateTablesTab();
+                case 'relationships': return generateRelationshipsTab();
+                case 'quality': return generateQualityTab();
+                case 'queries': return generateQueriesTab();
+                case 'export': return generateExportTab();
+                default: return '';
+            }
+        }
+
+        function generateOverviewTab() {
+            const summary = analysisResults.summary;
+            const tableTypes = {};
+            analysisResults.tables.forEach(t => {
+                tableTypes[t.table_type] = (tableTypes[t.table_type] || 0) + 1;
+            });
+
+            return `
+                <div class="tab-content active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-info-circle"></i> Database Overview</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 1.5rem; color: var(--gray-600);">
+                                <strong>${analysisResults.database_name}</strong> is a relational database containing 
+                                ${summary.total_tables} tables with ${formatNumber(summary.total_rows)} total records.
+                                The database has a quality score of <strong>${summary.quality_score}/100</strong>.
+                            </p>
+                            
+                            <h4 style="margin-bottom: 1rem; font-weight: 600;">Table Types</h4>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                                ${Object.entries(tableTypes).map(([type, count]) => `
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="badge ${type === 'fact' ? 'badge-blue' : type === 'dimension' ? 'badge-green' : 'badge-gray'}">${type}</span>
+                                        <span>${count} table${count > 1 ? 's' : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <h4 style="margin-bottom: 1rem; font-weight: 600;">Tables</h4>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Table Name</th>
+                                            <th>Type</th>
+                                            <th>Columns</th>
+                                            <th>Rows</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${analysisResults.tables.map(t => `
+                                            <tr>
+                                                <td><strong>${t.name}</strong></td>
+                                                <td><span class="badge ${t.table_type === 'fact' ? 'badge-blue' : t.table_type === 'dimension' ? 'badge-green' : 'badge-gray'}">${t.table_type}</span></td>
+                                                <td>${t.columns.length}</td>
+                                                <td>${formatNumber(t.row_count)}</td>
+                                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${t.business_description}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateTablesTab() {
+            return `
+                <div class="tab-content active fade-in">
+                    ${analysisResults.tables.map(table => `
+                        <div class="table-card">
+                            <div class="table-card-header">
+                                <h4>
+                                    <i class="fas fa-table" style="color: var(--primary);"></i>
+                                    ${table.name}
+                                    <span class="badge ${table.table_type === 'fact' ? 'badge-blue' : table.table_type === 'dimension' ? 'badge-green' : 'badge-gray'}">${table.table_type}</span>
+                                </h4>
+                                <div class="table-meta">
+                                    <span><i class="fas fa-columns"></i> ${table.columns.length} columns</span>
+                                    <span><i class="fas fa-database"></i> ${formatNumber(table.row_count)} rows</span>
+                                    <span><i class="fas fa-key"></i> ${table.primary_keys.length} PK</span>
+                                </div>
+                            </div>
+                            <div class="table-description">${table.business_description}</div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Column</th>
+                                            <th>Type</th>
+                                            <th>Key</th>
+                                            <th>Nullable</th>
+                                            <th>Nulls %</th>
+                                            <th>Unique</th>
+                                            <th>Semantic Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${table.columns.map(col => `
+                                            <tr>
+                                                <td>
+                                                    <strong>${col.name}</strong>
+                                                    <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">${col.business_description}</div>
+                                                </td>
+                                                <td><code style="background: var(--gray-100); padding: 0.125rem 0.375rem; border-radius: 0.25rem;">${col.data_type}</code></td>
+                                                <td>
+                                                    ${col.is_primary_key ? '<span class="badge badge-blue">🔑 PK</span>' : ''}
+                                                    ${col.is_foreign_key ? `<span class="badge badge-purple">🔗 FK</span>` : ''}
+                                                </td>
+                                                <td>${col.nullable ? '<span style="color: var(--success);">✓</span>' : '<span style="color: var(--gray-400);">✗</span>'}</td>
+                                                <td>
+                                                    <span class="${col.null_percentage > 50 ? 'badge badge-red' : col.null_percentage > 20 ? 'badge badge-yellow' : 'badge badge-green'}">
+                                                        ${col.null_percentage}%
+                                                    </span>
+                                                </td>
+                                                <td>${formatNumber(col.unique_count)}</td>
+                                                <td><span class="badge badge-gray">${col.semantic_type}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function generateRelationshipsTab() {
+            const relationships = analysisResults.relationships;
+            
+            // Generate simple ER diagram
+            const diagram = generateERDiagram();
+
+            return `
+                <div class="tab-content active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-project-diagram"></i> Entity Relationship Diagram</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="relationship-diagram">
+                                <pre>${diagram}</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-link"></i> Relationships (${relationships.length})</h3>
+                        </div>
+                        <div class="card-body">
+                            ${relationships.length > 0 ? `
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>From Table</th>
+                                                <th>Column</th>
+                                                <th></th>
+                                                <th>To Table</th>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Detection</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${relationships.map(rel => `
+                                                <tr>
+                                                    <td><strong>${rel.from_table}</strong></td>
+                                                    <td><code>${rel.from_column}</code></td>
+                                                    <td><i class="fas fa-arrow-right" style="color: var(--primary);"></i></td>
+                                                    <td><strong>${rel.to_table}</strong></td>
+                                                    <td><code>${rel.to_column}</code></td>
+                                                    <td><span class="badge badge-blue">${rel.relationship_type}</span></td>
+                                                    <td>${rel.is_explicit ? '<span class="badge badge-green">FK</span>' : '<span class="badge badge-yellow">Inferred</span>'}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p style="color: var(--gray-500);">No relationships detected in this database.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateERDiagram() {
+            const tables = analysisResults.tables;
+            const relationships = analysisResults.relationships;
+            
+            let diagram = '';
+            
+            // Simple text-based diagram
+            tables.forEach(table => {
+                const cols = table.columns.slice(0, 5).map(c => {
+                    let marker = c.is_primary_key ? '🔑' : c.is_foreign_key ? '🔗' : '  ';
+                    return `│ ${marker} ${c.name.padEnd(20)} ${c.data_type.padEnd(10)} │`;
+                }).join('\n');
+                
+                const width = 38;
+                const header = `┌${'─'.repeat(width)}┐`;
+                const title = `│ 📋 ${table.name.padEnd(width - 5)} │`;
+                const divider = `├${'─'.repeat(width)}┤`;
+                const footer = `└${'─'.repeat(width)}┘`;
+                
+                diagram += `${header}\n${title}\n${divider}\n${cols}\n${footer}\n\n`;
+            });
+
+            // Add relationships
+            if (relationships.length > 0) {
+                diagram += '\nRelationships:\n';
+                relationships.forEach(rel => {
+                    diagram += `  ${rel.from_table}.${rel.from_column} ──> ${rel.to_table}.${rel.to_column}\n`;
+                });
+            }
+
+            return diagram;
+        }
+
+        function generateQualityTab() {
+            const score = analysisResults.summary.quality_score;
+            const issues = analysisResults.quality_issues;
+            
+            const scoreClass = score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low';
+            const scoreText = score >= 80 ? 'Excellent quality' : score >= 50 ? 'Good quality with some issues' : 'Needs attention';
+
+            return `
+                <div class="tab-content active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Data Quality Score</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="quality-score">
+                                <div class="score-circle ${scoreClass}">
+                                    ${score}
+                                </div>
+                                <div class="score-details">
+                                    <h3>${scoreText}</h3>
+                                    <p>
+                                        Your database has ${issues.length} quality issue${issues.length !== 1 ? 's' : ''} detected.
+                                        ${score >= 80 ? 'Great job maintaining data quality!' : 'Review the issues below to improve your data quality.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${issues.length > 0 ? `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-exclamation-triangle"></i> Issues Found (${issues.length})</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Severity</th>
+                                                <th>Table</th>
+                                                <th>Column</th>
+                                                <th>Issue</th>
+                                                <th>Recommendation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${issues.map(issue => `
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge ${issue.severity === 'high' ? 'badge-red' : issue.severity === 'medium' ? 'badge-yellow' : 'badge-green'}">
+                                                            ${issue.severity === 'high' ? '🔴' : issue.severity === 'medium' ? '🟡' : '🟢'} ${issue.severity}
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>${issue.table}</strong></td>
+                                                    <td><code>${issue.column}</code></td>
+                                                    <td>${issue.description}</td>
+                                                    <td style="max-width: 250px;">${issue.recommendation}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="card">
+                            <div class="card-body" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
+                                <h3 style="color: var(--gray-700);">No Quality Issues Found!</h3>
+                                <p style="color: var(--gray-500);">Your database is in excellent shape.</p>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function generateQueriesTab() {
+            const queries = analysisResults.sample_queries;
+
+            return `
+                <div class="tab-content active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-code"></i> Sample SQL Queries</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                                Here are some useful queries to get started with your database:
+                            </p>
+                            
+                            ${queries.map((query, i) => `
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h4 style="font-weight: 600; margin-bottom: 0.5rem;">
+                                        ${i + 1}. ${query.title}
+                                    </h4>
+                                    <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                        ${query.description}
+                                    </p>
+                                    <div class="code-block" style="position: relative;">
+                                        <button class="btn btn-secondary copy-btn" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.75rem;">
+                                            Copy
+                                        </button>
+                                        <code>${highlightSQL(query.sql)}</code>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateExportTab() {
+            return `
+                <div class="tab-content active fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-download"></i> Export Documentation</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                                Download your database documentation in your preferred format:
+                            </p>
+                            
+                            <div class="export-buttons">
+                                <button class="btn btn-primary" onclick="downloadMarkdown()">
+                                    <i class="fab fa-markdown"></i>
+                                    Download Markdown
+                                </button>
+                                <button class="btn btn-secondary" onclick="copyMarkdown()">
+                                    <i class="fas fa-copy"></i>
+                                    Copy to Clipboard
+                                </button>
+                                <button class="btn btn-secondary" onclick="downloadJSON()">
+                                    <i class="fas fa-file-code"></i>
+                                    Download JSON
+                                </button>
+                            </div>
+
+                            <h4 style="margin-top: 2rem; margin-bottom: 1rem; font-weight: 600;">Preview</h4>
+                            <div class="markdown-preview" id="markdownPreview">
+                                Loading preview...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function downloadMarkdown() {
+            try {
+                const response = await fetch('/api/download/markdown');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${analysisResults.database_name}_documentation.md`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                showStatus('Error downloading file: ' + error.message, 'error');
+            }
+        }
+
+        async function copyMarkdown() {
+            try {
+                const response = await fetch('/api/export/markdown');
+                const data = await response.json();
+                await navigator.clipboard.writeText(data.markdown);
+                showStatus('Markdown copied to clipboard!', 'success');
+            } catch (error) {
+                showStatus('Error copying: ' + error.message, 'error');
+            }
+        }
+
+        function downloadJSON() {
+            const blob = new Blob([JSON.stringify(analysisResults, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${analysisResults.database_name}_analysis.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // Utility Functions
+        function showStatus(message, type) {
+            statusMessage.className = `status show ${type}`;
+            statusMessage.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-circle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
+            statusText.textContent = message;
+        }
+
+        function hideStatus() {
+            statusMessage.classList.remove('show');
+        }
+
+        function showLoading(show) {
+            loadingSection.classList.toggle('show', show);
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString();
+        }
+
+        function highlightSQL(sql) {
+            const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'GROUP BY', 'ORDER BY', 'LIMIT', 'AS', 'AND', 'OR', 'IN', 'NOT', 'NULL', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'DISTINCT'];
+            
+            let highlighted = sql;
+            keywords.forEach(kw => {
+                const regex = new RegExp(`\\b${kw}\\b`, 'gi');
+                highlighted = highlighted.replace(regex, `<span class="keyword">${kw}</span>`);
+            });
+            
+            // Highlight strings
+            highlighted = highlighted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            
+            return highlighted;
+        }
+
+        // Load markdown preview when export tab is shown
+        document.addEventListener('click', async (e) => {
+            if (e.target.closest('.tab[data-tab="export"]')) {
+                setTimeout(async () => {
+                    const preview = document.getElementById('markdownPreview');
+                    if (preview) {
+                        try {
+                            const response = await fetch('/api/export/markdown');
+                            const data = await response.json();
+                            preview.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(data.markdown)}</pre>`;
+                        } catch (error) {
+                            preview.textContent = 'Error loading preview';
+                        }
+                    }
+                }, 100);
+            }
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

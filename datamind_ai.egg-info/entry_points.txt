@@ -1,0 +1,2 @@
+[console_scripts]
+datamind = datamind.main:main

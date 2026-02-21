@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-02-21T12:27:17.126582",
+  "overview": {
+    "total_tables": 9,
+    "total_columns": 52,
+    "total_rows": 1192,
+    "quality_score": 75
+  },
+  "table_insights": [
+    {
+      "name": "customers",
+      "type": "dimension",
+      "size_category": "small",
+      "row_count": 100,
+      "column_count": 5
+    },
+    {
+      "name": "sellers",
+      "type": "dimension",
+      "size_category": "small",
+      "row_count": 30,
+      "column_count": 4
+    },
+    {
+      "name": "products",
+      "type": "dimension",
+      "size_category": "small",
+      "row_count": 50,
+      "column_count": 9
+    },
+    {
+      "name": "orders",
+      "type": "fact",
+      "size_category": "small",
+      "row_count": 200,
+      "column_count": 8
+    },
+    {
+      "name": "order_items",
+      "type": "fact",
+      "size_category": "small",
+      "row_count": 417,
+      "column_count": 7
+    },
+    {
+      "name": "order_payments",
+      "type": "fact",
+      "size_category": "small",
+      "row_count": 200,
+      "column_count": 5
+    },
+    {
+      "name": "order_reviews",
+      "type": "fact",
+      "size_category": "small",
+      "row_count": 138,
+      "column_count": 7
+    },
+    {
+      "name": "geolocation",
+      "type": "dimension",
+      "size_category": "small",
+      "row_count": 50,
+      "column_count": 5
+    },
+    {
+      "name": "product_category",
+      "type": "dimension",
+      "size_category": "small",
+      "row_count": 7,
+      "column_count": 2
+    }
+  ],
+  "quality_insights": {
+    "high_severity_count": 0,
+    "medium_severity_count": 5,
+    "total_issues": 5,
+    "top_issues": [
+      {
+        "table": "orders",
+        "column": "customer_id",
+        "issue_type": "low_cardinality",
+        "severity": "medium",
+        "description": "Identifier column has only 89 unique values",
+        "recommendation": "Verify if this column should be a unique identifier"
+      },
+      {
+        "table": "order_items",
+        "column": "order_id",
+        "issue_type": "low_cardinality",
+        "severity": "medium",
+        "description": "Identifier column has only 200 unique values",
+        "recommendation": "Verify if this column should be a unique identifier"
+      },
+      {
+        "table": "order_items",
+        "column": "order_item_id",
+        "issue_type": "low_cardinality",
+        "severity": "medium",
+        "description": "Identifier column has only 3 unique values",
+        "recommendation": "Verify if this column should be a unique identifier"
+      },
+      {
+        "table": "order_items",
+        "column": "product_id",
+        "issue_type": "low_cardinality",
+        "severity": "medium",
+        "description": "Identifier column has only 50 unique values",
+        "recommendation": "Verify if this column should be a unique identifier"
+      },
+      {
+        "table": "order_items",
+        "column": "seller_id",
+        "issue_type": "low_cardinality",
+        "severity": "medium",
+        "description": "Identifier column has only 30 unique values",
+        "recommendation": "Verify if this column should be a unique identifier"
+      }
+    ]
+  },
+  "relationship_insights": {
+    "total_relationships": 6,
+    "explicit_relationships": 6,
+    "inferred_relationships": 0
+  }
+}

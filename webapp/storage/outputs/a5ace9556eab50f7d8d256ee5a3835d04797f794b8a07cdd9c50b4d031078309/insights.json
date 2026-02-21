@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-02-20T21:27:02.233497",
+  "overview": {
+    "total_tables": 1,
+    "total_columns": 12,
+    "total_rows": 8807,
+    "quality_score": 100
+  },
+  "table_insights": [
+    {
+      "name": "netflix_titles",
+      "type": "dimension",
+      "size_category": "medium",
+      "row_count": 8807,
+      "column_count": 12
+    }
+  ],
+  "quality_insights": {
+    "high_severity_count": 0,
+    "medium_severity_count": 0,
+    "total_issues": 0,
+    "top_issues": []
+  },
+  "relationship_insights": {
+    "total_relationships": 0,
+    "explicit_relationships": 0,
+    "inferred_relationships": 0
+  }
+}
