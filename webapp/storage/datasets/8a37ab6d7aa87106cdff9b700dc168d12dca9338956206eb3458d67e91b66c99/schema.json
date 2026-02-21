@@ -1,0 +1,52 @@
+{
+  "database_name": "olist_customers_dataset",
+  "tables": [
+    {
+      "name": "olist_customers_dataset",
+      "type": "dimension",
+      "columns": [
+        {
+          "name": "customer_id",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": true,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "customer_unique_id",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": true,
+          "references": null
+        },
+        {
+          "name": "customer_zip_code_prefix",
+          "data_type": "INTEGER",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "customer_city",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        },
+        {
+          "name": "customer_state",
+          "data_type": "TEXT",
+          "nullable": "False",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

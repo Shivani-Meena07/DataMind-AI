@@ -1396,8 +1396,10 @@ def index():
 @app.route('/api/upload', methods=['POST'])
 def upload_database():
     """Handle file upload (SQLite, CSV, Excel, JSON) with content-based versioning."""
+    print(f"=== UPLOAD ENDPOINT CALLED ===")
     try:
         if 'file' not in request.files:
+            print("ERROR: No file in request")
             return jsonify({'error': 'No file provided'}), 400
         
         file = request.files['file']
@@ -1428,6 +1430,9 @@ def upload_database():
         session['db_path'] = filepath
         session['file_type'] = file_type
         session['original_filename'] = file.filename
+        
+        print(f"File saved to: {filepath}")
+        print(f"Session after upload: {dict(session)}")
         
         # Generate content-based fingerprint for the dataset
         try:
@@ -1491,11 +1496,19 @@ def analyze():
     - Same dataset = reuse cached analysis (no recomputation)
     - Different dataset = fresh analysis and cache
     """
+    print(f"=== ANALYZE ENDPOINT CALLED ===")
+    print(f"Session data: {dict(session)}")
+    
     db_path = session.get('db_path')
     file_type = session.get('file_type', 'sqlite')
     original_filename = session.get('original_filename', 'unknown')
     
+    print(f"db_path: {db_path}")
+    print(f"file_type: {file_type}")
+    print(f"File exists: {os.path.exists(db_path) if db_path else 'No path'}")
+    
     if not db_path or not os.path.exists(db_path):
+        print("ERROR: No file found in session!")
         return jsonify({'error': 'No file uploaded. Please upload a file first.'}), 400
     
     try:
@@ -1507,7 +1520,8 @@ def analyze():
             # CACHE HIT - Reuse stored results
             cached_results = versioning_system.storage.get_analysis_results(dataset_id)
             
-            if cached_results:
+            if cached_results and len(cached_results) > 2:
+                print(f"CACHE HIT: Found valid cached results for {dataset_id[:16]}")
                 # Update access stats
                 versioning_system.storage.record_access(dataset_id)
                 versioning_system.storage._index['stats']['cache_hits'] += 1
@@ -1517,6 +1531,9 @@ def analyze():
                 results = sanitize_for_json(cached_results)
                 session['analysis_results'] = results
                 
+                # Add dataset_id to top level for charts API
+                results['dataset_id'] = dataset_id
+                
                 # Add cache info to response
                 results['_cache_info'] = {
                     'is_cached': True,
@@ -1525,6 +1542,8 @@ def analyze():
                 }
                 
                 return jsonify(results)
+            else:
+                print(f"CACHE MISS: Dataset {dataset_id[:16]} exists in index but no analysis data - running fresh")
         
         # CACHE MISS - Run fresh analysis
         # Create analyzer factory for versioning system
@@ -1546,6 +1565,9 @@ def analyze():
         # Sanitize results for JSON serialization
         results = sanitize_for_json(processing_result.analysis_results)
         session['analysis_results'] = results
+        
+        # Add dataset_id to top level for charts API
+        results['dataset_id'] = processing_result.dataset_id
         
         # Add versioning info to response
         results['_cache_info'] = {

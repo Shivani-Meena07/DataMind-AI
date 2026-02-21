@@ -118,7 +118,7 @@ class StorageManager:
     def _load_index(self) -> Dict:
         """Load storage index."""
         if self.index_path.exists():
-            with open(self.index_path, 'r', encoding='utf-8') as f:
+            with open(self.index_path, 'r', encoding='utf-8-sig') as f:
                 return json.load(f)
         return {
             'version': self.VERSION,

@@ -1,7 +1,7 @@
 {
   "database_name": "netflix_titles",
   "file_type": "CSV",
-  "analysis_date": "2026-02-20T21:27:02.223936",
+  "analysis_date": "2026-02-21T23:18:35.794178",
   "summary": {
     "total_tables": 1,
     "total_columns": 12,

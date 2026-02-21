@@ -140,10 +140,14 @@ class DatasetVersioningSystem:
         
         # Step 2: Check for existing dataset
         if not force_reprocess and self.storage.dataset_exists(dataset_id):
-            # Dataset already processed - return cached results
-            return self._handle_cache_hit(dataset_id, start_time)
+            # Dataset already processed - try cached results
+            cached_result = self._handle_cache_hit(dataset_id, start_time)
+            if cached_result is not None:
+                return cached_result
+            # Cache was corrupted/empty - fall through to fresh analysis
+            logger.info(f"Falling back to fresh analysis for {dataset_id[:16]}...")
         
-        # Step 3: New dataset - run full processing
+        # Step 3: New dataset or cache miss - run full processing
         return self._handle_new_dataset(
             dataset_id=dataset_id,
             fingerprint=fingerprint,
@@ -161,6 +165,14 @@ class DatasetVersioningSystem:
         
         logger.info(f"Cache HIT for dataset {dataset_id[:16]}...")
         
+        # Retrieve cached results
+        analysis_results = self.storage.get_analysis_results(dataset_id)
+        
+        # If cached results are missing/empty, return None to trigger fresh analysis
+        if not analysis_results:
+            logger.warning(f"Cache entry exists but analysis data missing for {dataset_id[:16]}... - will reprocess")
+            return None
+        
         # Update stats
         self.storage._index['stats']['cache_hits'] += 1
         self.storage._save_index()
@@ -168,8 +180,6 @@ class DatasetVersioningSystem:
         # Record access
         self.storage.record_access(dataset_id)
         
-        # Retrieve cached results
-        analysis_results = self.storage.get_analysis_results(dataset_id)
         markdown = self.storage.get_markdown(dataset_id)
         insights = self.storage.get_insights(dataset_id)
         charts = self.storage.list_charts(dataset_id)
@@ -179,7 +189,7 @@ class DatasetVersioningSystem:
         return ProcessingResult(
             dataset_id=dataset_id,
             is_cached=True,
-            analysis_results=analysis_results or {},
+            analysis_results=analysis_results,
             markdown=markdown,
             insights=insights,
             charts=charts,

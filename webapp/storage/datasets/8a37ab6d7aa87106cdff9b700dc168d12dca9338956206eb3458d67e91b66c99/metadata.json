@@ -1,0 +1,15 @@
+{
+  "dataset_id": "8a37ab6d7aa87106cdff9b700dc168d12dca9338956206eb3458d67e91b66c99",
+  "original_filename": "olist_customers_dataset.csv",
+  "file_type": "csv",
+  "created_at": "2026-02-21T23:23:33.559156",
+  "row_count": 99441,
+  "column_count": 5,
+  "table_count": 1,
+  "file_size_bytes": 9033957,
+  "fingerprint_algorithm": "sha256",
+  "quality_score": 100,
+  "analysis_status": "completed",
+  "last_accessed": "2026-02-21T23:38:21.508437",
+  "access_count": 1
+}
